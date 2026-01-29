@@ -1,0 +1,179 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum OtpType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum EventState {
+  OPEN_FOR_REGISTRATION
+  CLOSED_FOR_REGISTRATION
+  CANCELLED
+}
+
+enum EventRole {
+  ATTENDEE
+  MANAGER
+  OWNER
+}
+
+enum NotificationType {
+  REMINDER
+  INVITE
+  CANCELLATION
+}
+
+model User {
+  id              Int      @id @default(autoincrement())
+  name            String   @db.VarChar(100)
+  username        String   @unique @db.VarChar(50)
+  email           String   @unique @db.VarChar(255)
+  passwordHash    String   @db.VarChar(255)
+  governorate     String   @db.VarChar(100)
+  profileImageUrl String?  @db.VarChar(255)
+  createdAt       DateTime @default(now())
+  isVerified      Boolean  @default(false)
+
+  refreshTokens       RefreshToken[]
+  otpCodes            OtpCode[]
+  fcmTokens           FcmToken[]
+  events              Event[]
+  inviteNotifications InviteNotification[]
+  userNotifications   UserNotification[]
+
+  @@index([id])
+  @@index([email])
+  @@index([username])
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
+model OtpCode {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  type      OtpType
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([code])
+  @@index([userId, type])
+}
+
+model FcmToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  createdAt DateTime @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
+model Notification {
+  id        Int              @id @default(autoincrement())
+  type      NotificationType
+  createdAt DateTime         @default(now())
+
+  reminderNotification     ReminderNotification?
+  cancellationNotification CancellationNotification?
+  inviteNotification       InviteNotification?
+  userNotifications        UserNotification[]
+}
+
+model ReminderNotification {
+  eventId Int
+  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  id           Int          @id
+  notification Notification @relation(fields: [id], references: [id], onDelete: Cascade)
+}
+
+model CancellationNotification {
+  eventId Int
+  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  id           Int          @id
+  notification Notification @relation(fields: [id], references: [id], onDelete: Cascade)
+}
+
+model InviteNotification {
+  eventId Int
+  role    EventRole
+
+  senderId Int
+  sender   User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  id           Int          @id
+  notification Notification @relation(fields: [id], references: [id], onDelete: Cascade)
+}
+
+model UserNotification {
+  isRead Boolean @default(false)
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  notificationId Int
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, notificationId])
+  @@index([notificationId])
+  @@index([userId])
+}
+
+model Event {
+  id                        Int                        @id @default(autoincrement())
+  name                      String                     @db.VarChar(255)
+  description               String?                    @db.Text
+  latitude                  Decimal                    @db.Decimal(10, 7)
+  longitude                 Decimal                    @db.Decimal(10, 7)
+  price                     Int
+  startDate                 DateTime
+  duration                  Int                        @db.SmallInt // duration in minutes
+  maxAttendees              Int
+  imageUrl                  String?                    @db.VarChar(255)
+  visibility                Visibility
+  state                     EventState                 @default(OPEN_FOR_REGISTRATION)
+  owner                     User?                      @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  ownerId                   Int?
+  createdAt                 DateTime                   @default(now())
+  reminderNotifications     ReminderNotification[]
+  cancellationNotifications CancellationNotification[]
+
+  @@index([name])
+}
