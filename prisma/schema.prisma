@@ -36,6 +36,11 @@ enum NotificationType {
   SYSTEM
 }
 
+enum NotificationTarget {
+  EVENT
+  INVITE
+}
+
 enum PaymentMethod {
   ONLINE
   AT_EVENT
@@ -78,8 +83,9 @@ model User {
   otpCodes              OtpCode[]
   fcmTokens             FcmToken[]
   invitesSent           Invite[]               @relation("SentInvites")
-  inviteReceived        Invite[]               @relation("ReceivedInvites")
+  invitesReceived       Invite[]               @relation("ReceivedInvites")
   ownedEvents           Event[]                @relation("EventOwner")
+  sentNotifications     Notification[]         @relation("Sender")
   notificationReceivers NotificationReceiver[]
   userEventRoles        UserEventRole[]
   userEventPermissions  UserEventPermission[]
@@ -133,39 +139,19 @@ model Notification {
   type      NotificationType
   createdAt DateTime         @default(now())
 
-  cancellationNotification CancellationNotification?
-  systemNotification       SystemNotification?
-  reminderNotification     ReminderNotification?
-  inviteNotification       Invite?
+  senderId Int?
+  sender   User? @relation("Sender", fields: [senderId], references: [id], onDelete: SetNull)
+
+  targetId   Int?
+  targetType NotificationTarget?
+
+  data Json @default("{}")
 
   notificationReceivers NotificationReceiver[]
 }
 
-model CancellationNotification {
-  id           Int          @id
-  notification Notification @relation(fields: [id], references: [id], onDelete: Cascade)
-
-  eventId Int
-  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-}
-
-model SystemNotification {
-  id           Int          @id
-  notification Notification @relation(fields: [id], references: [id], onDelete: Cascade)
-
-  message String @db.Text
-}
-
-model ReminderNotification {
-  id           Int          @id
-  notification Notification @relation(fields: [id], references: [id], onDelete: Cascade)
-
-  eventId Int
-  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-}
-
 model NotificationReceiver {
-  isRead Boolean @default(false)
+  read Boolean @default(false)
 
   receiverId Int
   receiver   User @relation(fields: [receiverId], references: [id], onDelete: Cascade)
@@ -182,9 +168,6 @@ model Invite {
   id     Int          @id @default(autoincrement())
   status InviteStatus @default(PENDING)
   role   EventRole
-
-  notificationId Int?          @unique
-  notification   Notification? @relation(fields: [notificationId], references: [id], onDelete: Cascade)
 
   senderId Int
   sender   User @relation("SentInvites", fields: [senderId], references: [id], onDelete: Cascade)
@@ -211,7 +194,7 @@ model InvitePermissions {
 model Event {
   id          Int     @id @default(autoincrement())
   name        String  @db.VarChar(255)
-  description String? @db.Text
+  description String  @db.Text
   latitude    Decimal @db.Decimal(10, 7)
   longitude   Decimal @db.Decimal(10, 7)
   governorate String  @db.VarChar(100)
@@ -231,13 +214,11 @@ model Event {
   ownerId Int?
   owner   User? @relation("EventOwner", fields: [ownerId], references: [id], onDelete: SetNull)
 
-  invites                   Invite[]
-  userRoles                 UserEventRole[]
-  userPermissions           UserEventPermission[]
-  cancellationNotifications CancellationNotification[]
-  reminderNotifications     ReminderNotification[]
-  user                      User?                      @relation(fields: [userId], references: [id])
-  userId                    Int?
+  invites         Invite[]
+  userRoles       UserEventRole[]
+  userPermissions UserEventPermission[]
+  user            User?                 @relation(fields: [userId], references: [id])
+  userId          Int?
 
   @@index([name])
   @@index([governorate])

@@ -1,4 +1,4 @@
-import { ErrorCode } from "../shared/types/enums.js";
+import { ErrorCode } from "./error-codes.js";
 
 class AppError extends Error {
   statusCode: number;

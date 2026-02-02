@@ -2,11 +2,11 @@ import express from "express";
 import type { Application, Request, Response } from "express";
 import { config } from "./config/config.js";
 import morgan from "morgan";
-import errorMiddleware from "./shared/middleware/errorMiddleware.js";
-import authRouter from "./features/auth/authRouter.js";
+import errorMiddleware from "./shared/middleware/error-handler.middleware.js";
+import authRouter from "./features/auth/auth.router.js";
 import notFoundMiddleware from "./shared/middleware/notFoundMiddleware.js";
-import userRouter from "./features/user/userRouter.js";
-import { verifyToken } from "./features/auth/authMiddleware.js";
+import userRouter from "./features/user/user.router.js";
+import { verifyToken } from "./shared/middleware/verify-token.middleware.js";
 
 const app: Application = express();
 if (config.NODE_ENV === "development") {

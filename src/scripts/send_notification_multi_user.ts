@@ -1,4 +1,4 @@
-// import { sendBackgroundNotification } from "../features/notification/notificationService.js";
+// import { sendPushNotification } from "../features/notification/notificationService.js";
 // import { NotificationType } from "../shared/types/NotificationMessage.js";
 // // This registration token comes from the client FCM SDKs.
 
@@ -16,7 +16,7 @@
 //   },
 // };
 // try {
-//   await sendBackgroundNotification(notificationMessage, userIds);
+//   await sendPushNotification(notificationMessage, userIds);
 // } catch (error) {
 //   console.error("Error sending notification:", error);
 // }
