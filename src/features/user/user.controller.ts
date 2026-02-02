@@ -10,6 +10,19 @@ const UserController = {
 
     return res.status(200).json({ success: true, data: { user: publicUser } });
   },
+
+  queryUsers: async (req: Request, res: Response) => {
+    // TODO
+  },
+
+  getCurrentUserAttendedEvents: async (req: Request, res: Response) => {
+    // TODO
+  },
+
+  getCurrentUserOrganizedEvents: async (req: Request, res: Response) => {
+    // TODO
+  },
+
   updateCurrentUser: async (req: Request, res: Response) => {
     const userId = req.payload!.userId;
     const updateData: UpdateUserData = req.body;
