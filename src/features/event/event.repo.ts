@@ -68,8 +68,6 @@ const EventRepository = {
       OFFSET ${(queryEventsData.page - 1) * queryEventsData.limit};
 `) as EventSearchEntry[];
 
-    console.log(queryEventsData);
-
     return events;
   },
 
@@ -101,7 +99,7 @@ const EventRepository = {
     return {
       ...rest,
       currentAttendees,
-      generatedState: getEventState({
+      state: getEventState({
         state: event.state,
         startAt: event.startAt,
         duration: event.duration,

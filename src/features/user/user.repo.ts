@@ -8,6 +8,7 @@ import {
   eventOmitFields,
   userOmitFields,
 } from "../../config/constants.js";
+import { getEventState } from "../event/event.util.js";
 
 const UserRepository = {
   getUserById: async (id: number) => {
@@ -96,11 +97,18 @@ const UserRepository = {
     });
 
     const formattedEvents = events.map((event) => {
-      const { _count, ...rest } = event;
+      const { _count, state, ...rest } = event;
       const currentAttendees = _count.userRoles;
       return {
         ...rest,
         currentAttendees,
+        state: getEventState({
+          state,
+          startAt: event.startAt,
+          duration: event.duration,
+          currentAttendees,
+          maxAttendees: event.maxAttendees,
+        }),
       };
     });
 
@@ -132,11 +140,18 @@ const UserRepository = {
     });
 
     const formattedEvents = events.map((event) => {
-      const { _count, ...rest } = event;
+      const { _count, state, ...rest } = event;
       const currentAttendees = _count.userRoles;
       return {
         ...rest,
         currentAttendees,
+        state: getEventState({
+          state,
+          startAt: event.startAt,
+          duration: event.duration,
+          currentAttendees,
+          maxAttendees: event.maxAttendees,
+        }),
       };
     });
 

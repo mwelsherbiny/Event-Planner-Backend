@@ -1,4 +1,9 @@
-import { EventVisibility, PaymentMethod } from "@prisma/client";
+import {
+  EventRole,
+  EventVisibility,
+  PaymentMethod,
+  Permission,
+} from "@prisma/client";
 import { z } from "zod";
 import { governorate } from "../user/user.schema.js";
 import { EventSortableFields } from "./event.types.js";
@@ -80,3 +85,10 @@ export const queryEventsSchema = z
   })
   .and(paginationSchema);
 export type QueryEventsRequest = z.infer<typeof queryEventsSchema>;
+
+export const eventInviteRequestSchema = z.object({
+  userId: z.number().int().positive(),
+  role: z.enum(EventRole),
+  permissions: z.set(z.enum(Permission)).optional(),
+});
+export type EventInviteRequest = z.infer<typeof eventInviteRequestSchema>;

@@ -3,7 +3,9 @@ import type { EventStateContext } from "./event.types.js";
 import { GeneratedEventState } from "./event.types.js";
 import { EventState } from "@prisma/client";
 
-export function getEventState(eventStateContext: EventStateContext) {
+export function getEventState(
+  eventStateContext: EventStateContext,
+): GeneratedEventState {
   if (eventStateContext.state === EventState.CANCELLED) {
     return GeneratedEventState.CANCELLED;
   }
@@ -20,11 +22,14 @@ export function getEventState(eventStateContext: EventStateContext) {
     return GeneratedEventState.ONGOING;
   }
 
-  if (eventStateContext.currentAttendees >= eventStateContext.maxAttendees) {
+  if (
+    eventStateContext.currentAttendees >= eventStateContext.maxAttendees ||
+    eventStateContext.state === EventState.CLOSED_FOR_REGISTRATION
+  ) {
     return GeneratedEventState.CLOSED_FOR_REGISTRATION;
   }
 
-  return eventStateContext.state;
+  return GeneratedEventState.OPEN_FOR_REGISTRATION;
 }
 
 export function generateAttendanceCode(): string {

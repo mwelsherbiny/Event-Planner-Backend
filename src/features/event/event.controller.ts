@@ -1,8 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type { Request, Response, NextFunction } from "express";
-import type { CreateEventRequest, QueryEventsRequest } from "./event.schema.js";
+import type {
+  CreateEventRequest,
+  EventInviteRequest,
+  QueryEventsRequest,
+} from "./event.schema.js";
 import EventService from "./event.service.js";
 import uploadImage from "../../integrations/cloudinary/imageUpload.js";
+import type { EventInviteData } from "./event.types.js";
 
 const EventController = {
   queryEvents: async (req: Request, res: Response) => {
@@ -76,18 +81,37 @@ const EventController = {
     res: Response,
     next: NextFunction,
   ) => {
-    // TODO
+    const eventInviteRequest: EventInviteRequest = req.body;
+    const eventId = parseInt(req.params.id!, 10);
+    const senderId = req.payload!.userId;
+
+    const eventInviteData: EventInviteData = {
+      ...eventInviteRequest,
+      senderId,
+      eventId,
+    };
+
+    const createdInvite =
+      await EventService.inviteUserForEvent(eventInviteData);
+
+    return res
+      .status(200)
+      .json({ success: true, data: { invite: createdInvite } });
   },
 
   updateEvent: async (req: Request, res: Response, next: NextFunction) => {
     // TODO
   },
 
-  removeEventMember: async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
+  leaveEvent: async (req: Request, res: Response, next: NextFunction) => {
+    // TODO
+  },
+
+  removeAttendee: async (req: Request, res: Response, next: NextFunction) => {
+    // TODO
+  },
+
+  removeManager: async (req: Request, res: Response, next: NextFunction) => {
     // TODO
   },
 };

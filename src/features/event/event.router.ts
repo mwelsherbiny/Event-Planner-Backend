@@ -4,7 +4,11 @@ import {
   validateData,
   validateQuery,
 } from "../../shared/middleware/validate.middleware.js";
-import { createEventSchema, queryEventsSchema } from "./event.schema.js";
+import {
+  createEventSchema,
+  eventInviteRequestSchema,
+  queryEventsSchema,
+} from "./event.schema.js";
 import { upload } from "../../shared/middleware/upload.middleware.js";
 
 const eventRouter = Router();
@@ -26,10 +30,19 @@ eventRouter.post(
   EventController.createEvent,
 );
 eventRouter.post("/:id/attendees", EventController.addAttendeeToEvent);
-eventRouter.post("/:id/invites", EventController.inviteUserForEvent);
+eventRouter.post(
+  "/:id/invites",
+  validateData(eventInviteRequestSchema),
+  EventController.inviteUserForEvent,
+);
 
 eventRouter.patch("/:id", EventController.updateEvent);
 
-eventRouter.delete("/:id/member/:userId", EventController.removeEventMember);
+eventRouter.delete("/:id/member", EventController.leaveEvent);
+eventRouter.delete(
+  "/:id/attendees/:attendeeId",
+  EventController.removeAttendee,
+);
+eventRouter.delete("/:id/manager/:managerId", EventController.removeManager);
 
 export default eventRouter;

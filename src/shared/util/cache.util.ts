@@ -33,4 +33,6 @@ export async function initializeCache() {
       new Set(role.rolePermissions.map((perm) => perm.permission)),
     );
   }
+
+  console.log("Role cache initialized:", RoleCache);
 }

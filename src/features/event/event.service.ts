@@ -1,7 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import EventRepository from "./event.repo.js";
-import { EventState, EventVisibility, Prisma } from "@prisma/client";
+import { EventVisibility, Prisma } from "@prisma/client";
 import type { CreateEventRequest, QueryEventsRequest } from "./event.schema.js";
-import type { CreateEventData, QueryEventsData } from "./event.types.js";
+import {
+  GeneratedEventState,
+  type CreateEventData,
+  type EventInviteData,
+  type QueryEventsData,
+} from "./event.types.js";
 import { generateAttendanceCode } from "./event.util.js";
 import { ErrorCode } from "../../errors/error-codes.js";
 import AppError from "../../errors/AppError.js";
@@ -59,7 +65,7 @@ const EventService = {
       });
     }
 
-    if (event.generatedState !== EventState.OPEN_FOR_REGISTRATION) {
+    if (event.state !== GeneratedEventState.OPEN_FOR_REGISTRATION) {
       throw new AppError({
         message: "Event is not open for registration",
         statusCode: 403,
@@ -92,6 +98,18 @@ const EventService = {
       }
     }
   },
+
+  inviteUserForEvent: async (eventInviteData: EventInviteData) => {
+    // check if event exists
+    // check if event can accept new attendees (open for registration, or not full)
+    // check if receiver user exists
+    // check if sender has permission to invite
+    // check if user is already invited or member of event
+  },
 };
+
+async function assertEventExists(eventId: number) {
+  const event = await EventRepository.getById(eventId);
+}
 
 export default EventService;
