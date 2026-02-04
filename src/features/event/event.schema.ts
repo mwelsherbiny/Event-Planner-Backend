@@ -87,7 +87,7 @@ export const queryEventsSchema = z
 export type QueryEventsRequest = z.infer<typeof queryEventsSchema>;
 
 export const eventInviteRequestSchema = z.object({
-  userId: z.number().int().positive(),
+  receiverId: z.number().int().positive(),
   role: z.enum(EventRole),
   permissions: z.set(z.enum(Permission)).optional(),
 });

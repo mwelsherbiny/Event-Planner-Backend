@@ -15,8 +15,6 @@ const EventController = {
 
     const events = await EventService.queryEvents(eventQueryRequest);
 
-    console.log(events);
-
     return res.status(200).json({ success: true, data: { events } });
   },
 

@@ -6,6 +6,13 @@ import UserRepository from "./user.repo.js";
 import type { PaginationData } from "../../shared/schemas/paginationSchema.js";
 
 const UserService = {
+  assertUserExists: async (userId: number) => {
+    const exists = await UserRepository.doesExist(userId);
+    if (!exists) {
+      throwUserNotFoundError();
+    }
+  },
+
   getUser: async (userId: number) => {
     const user = await UserRepository.getUserById(userId);
     if (!user) {

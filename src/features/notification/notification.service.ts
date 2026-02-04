@@ -1,13 +1,10 @@
 import { sendFcmNotification } from "../../integrations/firebase/fcm.integration.js";
-import type {
-  PushNotification,
-  ForegroundNotification,
-  CreateNotificationData,
-} from "./notification.types.js";
+import type { CreateNotificationData } from "./notification.types.js";
 import FcmTokenRepository from "./repositories/fcm-token.repo.js";
 import NotificationRepository from "./repositories/notification.repo.js";
 import AppError from "../../errors/AppError.js";
 import { ErrorCode } from "../../errors/error-codes.js";
+import { mapNotificationToFcmPayload } from "./notification.util.js";
 
 const NotificationService = {
   registerFcmToken: async (userId: number, fcmToken: string) => {
@@ -65,14 +62,25 @@ const NotificationService = {
   },
 
   sendNotification: async (
-    notification: PushNotification | ForegroundNotification,
+    notification: CreateNotificationData,
     userIds: [number, ...number[]],
   ) => {
     // Find the registration tokens for the given user IDs
     const fcmTokensStrings = await getFcmTokensStrings(userIds);
 
+    if (fcmTokensStrings.length === 0) {
+      // No valid FCM tokens found, skip sending notification
+      return;
+    }
+
+    // Store the notification in the database for the users
+    await NotificationService.storeNotificationForUsers(notification, userIds);
+
     // Send the notification via Firebase Cloud Messaging
-    const result = await sendFcmNotification(notification, fcmTokensStrings);
+    const result = await sendFcmNotification(
+      mapNotificationToFcmPayload(notification),
+      fcmTokensStrings,
+    );
 
     // delete invalid tokens
     if (result.failureCount > 0) {
@@ -94,9 +102,6 @@ const NotificationService = {
 
 async function getFcmTokensStrings(userIds: [number, ...number[]]) {
   const fcmTokens = await FcmTokenRepository.getFcmTokenByUserIds(userIds);
-  if (fcmTokens.length === 0) {
-    throw new Error("No FCM tokens found for the given user IDs");
-  }
   const fcmTokensStrings = fcmTokens.map((token) => token.token);
   return fcmTokensStrings;
 }

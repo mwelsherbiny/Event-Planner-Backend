@@ -4,7 +4,15 @@ import AppError from "../../errors/AppError.js";
 
 export const RoleCache = {
   roleIdMap: new Map<EventRole, number>(),
+  idRoleMap: new Map<number, EventRole>(),
   rolePermissionsMap: new Map<EventRole, Set<Permission>>(),
+
+  getRoleById(id: number): EventRole {
+    if (this.idRoleMap.has(id)) {
+      return this.idRoleMap.get(id)!;
+    }
+    throw AppError.internalError();
+  },
 
   getRoleId(role: EventRole): number {
     if (this.roleIdMap.has(role)) {
@@ -28,6 +36,7 @@ export async function initializeCache() {
 
   for (const role of roles) {
     RoleCache.roleIdMap.set(role.role, role.id);
+    RoleCache.idRoleMap.set(role.id, role.role);
     RoleCache.rolePermissionsMap.set(
       role.role,
       new Set(role.rolePermissions.map((perm) => perm.permission)),

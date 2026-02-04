@@ -9,8 +9,14 @@ import {
   userOmitFields,
 } from "../../config/constants.js";
 import { getEventState } from "../event/event.util.js";
+import type { FormattedEventData } from "../event/event.types.js";
 
 const UserRepository = {
+  doesExist: async (userId: number) => {
+    const count = await prisma.user.count({ where: { id: userId } });
+    return count > 0;
+  },
+
   getUserById: async (id: number) => {
     const user = await prisma.user.findUnique({ where: { id } });
     return user;
@@ -80,7 +86,10 @@ const UserRepository = {
     });
   },
 
-  getAttendedEvents: async (userId: number, paginationData: PaginationData) => {
+  getAttendedEvents: async (
+    userId: number,
+    paginationData: PaginationData,
+  ): Promise<FormattedEventData[]> => {
     const events = await prisma.event.findMany({
       where: {
         userRoles: {

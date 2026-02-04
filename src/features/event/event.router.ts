@@ -38,11 +38,11 @@ eventRouter.post(
 
 eventRouter.patch("/:id", EventController.updateEvent);
 
-eventRouter.delete("/:id/member", EventController.leaveEvent);
+eventRouter.delete("/:id/members", EventController.leaveEvent);
 eventRouter.delete(
   "/:id/attendees/:attendeeId",
   EventController.removeAttendee,
 );
-eventRouter.delete("/:id/manager/:managerId", EventController.removeManager);
+eventRouter.delete("/:id/managers/:managerId", EventController.removeManager);
 
 export default eventRouter;

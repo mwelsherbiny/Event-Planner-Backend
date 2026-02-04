@@ -51,3 +51,8 @@ export type EventInviteData = EventInviteRequest & {
   senderId: number;
   eventId: number;
 };
+
+export type FormattedEventData = Omit<Event, "state"> & {
+  currentAttendees: number;
+  state: GeneratedEventState;
+};

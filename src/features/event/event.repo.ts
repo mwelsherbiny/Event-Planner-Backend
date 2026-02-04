@@ -1,12 +1,14 @@
-import { EventRole, Prisma } from "@prisma/client";
+import { EventRole, Permission, Prisma } from "@prisma/client";
 import prisma from "../../integrations/db/db.config.js";
 import type {
   CreateEventData,
   EventSearchEntry,
+  FormattedEventData,
   QueryEventsData,
 } from "./event.types.js";
 import { getEventState } from "./event.util.js";
 import { RoleCache } from "../../shared/util/cache.util.js";
+import { attendeeCountInclude } from "../../config/constants.js";
 
 const EventRepository = {
   create: async (createEventData: CreateEventData, ownerId: number) => {
@@ -71,22 +73,10 @@ const EventRepository = {
     return events;
   },
 
-  getById: async (eventId: number) => {
+  getById: async (eventId: number): Promise<FormattedEventData | null> => {
     const event = await prisma.event.findUnique({
       where: { id: eventId },
-      include: {
-        _count: {
-          select: {
-            userRoles: {
-              where: {
-                role: {
-                  role: EventRole.ATTENDEE,
-                },
-              },
-            },
-          },
-        },
-      },
+      include: attendeeCountInclude,
     });
 
     if (!event) {
@@ -124,6 +114,50 @@ const EventRepository = {
     });
 
     return result.attendanceCode;
+  },
+
+  hasMember: async (userId: number, eventId: number) => {
+    const count = await prisma.userEventRole.count({
+      where: {
+        userId,
+        eventId,
+      },
+    });
+
+    return count > 0;
+  },
+
+  getMemberPermissions: async (userId: number, eventId: number) => {
+    const user = await prisma.userEventRole.findUnique({
+      where: {
+        userId_eventId: {
+          userId,
+          eventId,
+        },
+      },
+      include: {
+        permissions: {
+          select: { permission: true },
+        },
+      },
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    const userRole = RoleCache.getRoleById(user.roleId);
+    const rolePermissions = RoleCache.getRolePermissions(userRole);
+
+    const permissions = new Set<Permission>();
+    for (const perm of user.permissions) {
+      permissions.add(perm.permission);
+    }
+    for (const perm of rolePermissions) {
+      permissions.add(perm);
+    }
+
+    return { userId, permissions };
   },
 };
 
