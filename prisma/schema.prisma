@@ -89,7 +89,6 @@ model User {
   notificationReceivers NotificationReceiver[]
   userEventRoles        UserEventRole[]
   userEventPermissions  UserEventPermission[]
-  events                Event[]
 
   @@index([email])
   @@index([username])
@@ -202,7 +201,7 @@ model Event {
   paymentMethod PaymentMethod
   price         Decimal?      @db.Decimal(10, 2) // null when FREE
 
-  startDate    DateTime
+  startAt      DateTime
   duration     Int      @db.SmallInt
   maxAttendees Int
   imageUrl     String?  @db.VarChar(255)
@@ -217,12 +216,10 @@ model Event {
   invites         Invite[]
   userRoles       UserEventRole[]
   userPermissions UserEventPermission[]
-  user            User?                 @relation(fields: [userId], references: [id])
-  userId          Int?
 
   @@index([name])
   @@index([governorate])
-  @@index([startDate])
+  @@index([startAt])
   @@index([price])
 }
 
@@ -251,6 +248,9 @@ model UserEventRole {
 
   roleId Int
   role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  attendanceCode String? @db.Uuid
+  attended       Boolean? @default(false)
 
   @@id([userId, eventId, roleId])
   @@index([userId, eventId])

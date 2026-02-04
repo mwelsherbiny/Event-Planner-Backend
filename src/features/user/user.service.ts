@@ -1,31 +1,70 @@
 import type { User } from "@prisma/client";
 import { throwUserNotFoundError } from "../../errors/auth.errors.js";
 import { removeSensitiveData } from "../auth/auth.util.js";
-import { getUserById, updateUserRepo } from "./user.repo.js";
-import type { UpdateUserData } from "./user.schema.js";
+import type { UpdateUserData, UserQueryData } from "./user.schema.js";
+import UserRepository from "./user.repo.js";
+import type { PaginationData } from "../../shared/schemas/paginationSchema.js";
 
-export async function getUser(userId: number) {
-  const user = await getUserById(userId);
-  if (!user) {
-    throwUserNotFoundError();
-  }
+const UserService = {
+  getUser: async (userId: number) => {
+    const user = await UserRepository.getUserById(userId);
+    if (!user) {
+      throwUserNotFoundError();
+    }
 
-  const publicUser = removeSensitiveData(user);
+    const publicUser = removeSensitiveData(user);
 
-  return publicUser;
-}
+    return publicUser;
+  },
 
-export async function updateUserService(
-  userId: number,
-  updateData: UpdateUserData,
-) {
-  const storedUser = await getUserById(userId);
-  if (!storedUser) {
-    throwUserNotFoundError();
-  }
+  updateUser: async (userId: number, updateData: UpdateUserData) => {
+    const storedUser = await UserRepository.getUserById(userId);
+    if (!storedUser) {
+      throwUserNotFoundError();
+    }
 
-  const updatedUser = await updateUserRepo(userId, updateData as Partial<User>);
-  const publicUser = removeSensitiveData(updatedUser);
+    const updatedUser = await UserRepository.updateUserRepo(
+      userId,
+      updateData as Partial<User>,
+    );
+    const publicUser = removeSensitiveData(updatedUser);
 
-  return publicUser;
-}
+    return publicUser;
+  },
+
+  queryUsers: async (userQueryData: UserQueryData) => {
+    if (userQueryData.q.includes("@")) {
+      return await UserRepository.queryUsersByEmail(
+        userQueryData.q,
+        userQueryData.page,
+        userQueryData.limit,
+      );
+    }
+    return await UserRepository.queryUsersByUsername(
+      userQueryData.q,
+      userQueryData.page,
+      userQueryData.limit,
+    );
+  },
+
+  getAttendedEvents: async (userId: number, paginationData: PaginationData) => {
+    const events = await UserRepository.getAttendedEvents(
+      userId,
+      paginationData,
+    );
+    return events;
+  },
+
+  getOrganizedEvents: async (
+    userId: number,
+    paginationData: PaginationData,
+  ) => {
+    const events = await UserRepository.getOrganizedEvents(
+      userId,
+      paginationData,
+    );
+    return events;
+  },
+};
+
+export default UserService;

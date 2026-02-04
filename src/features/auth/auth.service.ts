@@ -1,12 +1,6 @@
 import { config } from "../../config/config.js";
 import RefreshTokenRepository from "./repositories/refresh-token.repo.js";
-import {
-  createUser,
-  getUserByEmail,
-  getUserByEmailOrUsername,
-  getUserById,
-  updateUserRepo,
-} from "../user/user.repo.js";
+import UserRepository from "../user/user.repo.js";
 import type {
   LoginUserBody,
   RegisterUserBody,
@@ -33,7 +27,7 @@ import expiryAsDate from "../../shared/util/expiry.util.js";
 
 const AuthService = {
   loginUser: async (user: LoginUserBody) => {
-    const storedUser = await getUserByEmail(user.email);
+    const storedUser = await UserRepository.getUserByEmail(user.email);
     if (!storedUser) {
       throwAuthError();
     }
@@ -66,7 +60,7 @@ const AuthService = {
 
   registerUser: async (user: RegisterUserBody) => {
     // Check if user with the same email/username already exists
-    const storedUser = await getUserByEmailOrUsername(
+    const storedUser = await UserRepository.getUserByEmailOrUsername(
       user.email,
       user.username,
     );
@@ -78,7 +72,10 @@ const AuthService = {
     const salt = 10;
     const { password, ...userData } = user;
     const passwordHash = await bcrypt.hash(password, salt);
-    const createdUser = await createUser({ ...userData, passwordHash });
+    const createdUser = await UserRepository.createUser({
+      ...userData,
+      passwordHash,
+    });
     return removeSensitiveData(createdUser);
   },
 
@@ -134,7 +131,7 @@ const AuthService = {
     const mostRecentOtp =
       await AuthService.getMostRecentVerificationOtp(userId);
     await AuthService.compareOtpCodes(otpCode, mostRecentOtp);
-    await updateUserRepo(userId, { isVerified: true });
+    await UserRepository.updateUserRepo(userId, { isVerified: true });
 
     const payload = { userId };
     const accessToken = AuthService.signAccessToken(payload);
@@ -201,7 +198,7 @@ const AuthService = {
     await assertUserIdExists(userId);
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
-    await updateUserRepo(userId, { passwordHash });
+    await UserRepository.updateUserRepo(userId, { passwordHash });
   },
 
   signAccessToken: (payload: JwtPayload) => {
@@ -346,7 +343,7 @@ async function getMostRecentOtp(userId: number, otpType: OtpType) {
 }
 
 async function assertUserEmailExists(email: string) {
-  const user = await getUserByEmail(email);
+  const user = await UserRepository.getUserByEmail(email);
   if (!user) {
     throwUserNotFoundError();
   }
@@ -355,7 +352,7 @@ async function assertUserEmailExists(email: string) {
 }
 
 async function assertUserIdExists(userId: number) {
-  const user = await getUserById(userId);
+  const user = await UserRepository.getUserById(userId);
   if (!user) {
     throwUserNotFoundError();
   }

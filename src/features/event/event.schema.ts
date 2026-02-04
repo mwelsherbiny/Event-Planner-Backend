@@ -1,6 +1,8 @@
 import { EventVisibility, PaymentMethod } from "@prisma/client";
 import { z } from "zod";
 import { governorate } from "../user/user.schema.js";
+import { EventSortableFields } from "./event.types.js";
+import { paginationSchema } from "../../shared/schemas/paginationSchema.js";
 
 const visibility = z.preprocess(
   (val) => (typeof val === "string" ? val.trim().toUpperCase() : val),
@@ -12,22 +14,33 @@ const paymentMethod = z.preprocess(
   z.enum(PaymentMethod),
 );
 
-export const eventCreationSchema = z
+export const createEventSchema = z
   .object({
     name: z.string().min(2).max(50),
     description: z.string().min(20).max(500),
-    latitude: z.number().min(-90).max(90),
-    longitude: z.number().min(-180).max(180),
+    latitude: z.coerce.number().min(-90).max(90),
+    longitude: z.coerce.number().min(-180).max(180),
     governorate,
-    startTime: z.date(),
-    duration: z.number().int().positive().min(15).max(720),
-    maxAttendance: z.number().int().positive().max(10000).optional(),
+    startAt: z.iso.datetime(),
+    duration: z.coerce.number().int().positive().min(15).max(720),
+    maxAttendees: z.coerce.number().int().positive().max(10000),
     imageUrl: z.url().optional(),
     visibility,
     paymentMethod,
-    price: z.number().positive().optional(),
+    price: z.coerce.number().positive().optional(),
   })
   .superRefine((data, ctx) => {
+    // startAt must be in the future
+
+    if (new Date(data.startAt) <= new Date()) {
+      ctx.addIssue({
+        path: ["startAt"],
+        code: z.ZodIssueCode.custom,
+        message: "Event start time must be in the future",
+        params: { code: "start_time_in_past" },
+      });
+    }
+
     // Price is present but paymentMethod is not ONLINE or AT_EVENT
     if (
       data.price !== undefined &&
@@ -54,3 +67,16 @@ export const eventCreationSchema = z
       });
     }
   });
+export type CreateEventRequest = z.infer<typeof createEventSchema>;
+
+export const queryEventsSchema = z
+  .object({
+    name: z.string().min(2).max(50).optional(),
+    governorate: governorate.optional(),
+    sort: z
+      .enum(EventSortableFields)
+      .optional()
+      .default(EventSortableFields.START_AT_ASC),
+  })
+  .and(paginationSchema);
+export type QueryEventsRequest = z.infer<typeof queryEventsSchema>;

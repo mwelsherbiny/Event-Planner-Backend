@@ -5,7 +5,15 @@ const InviteController = {
     // TODO
   },
 
-  updateInviteDetails: async (
+  addInviteAcceptance: async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    // TODO
+  },
+
+  addInviteRejection: async (
     req: Request,
     res: Response,
     next: NextFunction,

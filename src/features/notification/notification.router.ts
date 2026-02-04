@@ -1,6 +1,6 @@
 import { Router } from "express";
 import NotificationController from "./notification.controller.js";
-import validateData from "../../shared/middleware/validate.middleware.js";
+import { validateData } from "../../shared/middleware/validate.middleware.js";
 import { registerFcmTokenSchema } from "./notification.schema.js";
 
 const notificationRouter = Router();

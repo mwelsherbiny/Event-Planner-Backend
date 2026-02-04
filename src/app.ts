@@ -7,6 +7,9 @@ import authRouter from "./features/auth/auth.router.js";
 import notFoundMiddleware from "./shared/middleware/notFoundMiddleware.js";
 import userRouter from "./features/user/user.router.js";
 import { verifyToken } from "./shared/middleware/verify-token.middleware.js";
+import notificationRouter from "./features/notification/notification.router.js";
+import eventRouter from "./features/event/event.router.js";
+import inviteRouter from "./features/invite/invite.router.js";
 
 const app: Application = express();
 if (config.NODE_ENV === "development") {
@@ -29,7 +32,9 @@ app.use("/api/auth", authRouter);
 
 // Protected routes
 app.use("/api/users", verifyToken, userRouter);
-// app.use("/api/notifications", verifyToken, notificationRouter);
+app.use("/api/notifications", verifyToken, notificationRouter);
+app.use("/api/events", verifyToken, eventRouter);
+app.use("/api/invites", verifyToken, inviteRouter);
 
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);

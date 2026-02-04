@@ -1,5 +1,6 @@
 import z from "zod";
-import { egyptGovernorates } from "../../config/constants.js";
+import { EGYPT_GOVERNORATES } from "../../config/constants.js";
+import { paginationSchema } from "../../shared/schemas/paginationSchema.js";
 
 export const emailSchema = z.object({
   email: z.email("Invalid email"),
@@ -14,7 +15,7 @@ export const passwordSchema = z.object({
 
 export const governorate = z.preprocess(
   (val) => (typeof val === "string" ? val.trim().toLowerCase() : val),
-  z.enum(egyptGovernorates),
+  z.enum(EGYPT_GOVERNORATES),
 );
 export const governorateSchema = z.object({
   governorate,
@@ -38,3 +39,10 @@ export const updateUserSchema = z.object({
   profileImageUrl: z.string().optional(),
 });
 export type UpdateUserData = z.infer<typeof updateUserSchema>;
+
+export const userQuerySchema = z
+  .object({
+    q: z.string().min(1, "Query cannot be empty"),
+  })
+  .and(paginationSchema);
+export type UserQueryData = z.infer<typeof userQuerySchema>;
