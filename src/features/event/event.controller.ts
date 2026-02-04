@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { Request, Response, NextFunction } from "express";
 import type { CreateEventRequest, QueryEventsRequest } from "./event.schema.js";
 import EventService from "./event.service.js";
 import uploadImage from "../../integrations/cloudinary/imageUpload.js";
 
 const EventController = {
-  queryEvents: async (req: Request, res: Response, next: NextFunction) => {
+  queryEvents: async (req: Request, res: Response) => {
     const eventQueryRequest = req.parsedQuery as QueryEventsRequest;
 
     const events = await EventService.queryEvents(eventQueryRequest);

@@ -1,4 +1,4 @@
-import { EventRole, EventVisibility, Prisma } from "@prisma/client";
+import { EventRole, Prisma } from "@prisma/client";
 import prisma from "../../integrations/db/db.config.js";
 import type {
   CreateEventData,
@@ -7,10 +7,6 @@ import type {
 } from "./event.types.js";
 import { getEventState } from "./event.util.js";
 import { RoleCache } from "../../shared/util/cache.util.js";
-import {
-  attendeeCountInclude,
-  eventOmitFields,
-} from "../../config/constants.js";
 
 const EventRepository = {
   create: async (createEventData: CreateEventData, ownerId: number) => {

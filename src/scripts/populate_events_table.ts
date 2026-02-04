@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { randomUUID } from "crypto";
 
 const numberOfEvents = parseInt(process.argv[3] as string, 10) || 1;

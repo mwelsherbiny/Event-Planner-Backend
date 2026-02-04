@@ -36,8 +36,7 @@ const EventService = {
 
     const sortOrder = sort.startsWith("-") ? "desc" : "asc";
     const sortField = sort.replace("-", "") as "startAt" | "price";
-    const queryEventData: QueryEventsData = { ...rest, sortOrder, sortField }; 
-
+    const queryEventData: QueryEventsData = { ...rest, sortOrder, sortField };
     return await EventRepository.query(queryEventData);
   },
 

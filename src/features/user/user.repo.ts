@@ -1,7 +1,6 @@
 import { EventRole, type User } from "@prisma/client";
 import prisma from "../../integrations/db/db.config.js";
 import type { CreateUserData } from "../auth/auth.schema.js";
-import { get } from "http";
 import { RoleCache } from "../../shared/util/cache.util.js";
 import type { PaginationData } from "../../shared/schemas/paginationSchema.js";
 import {

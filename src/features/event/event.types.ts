@@ -1,4 +1,4 @@
-import type { Event, EventState, Prisma } from "@prisma/client";
+import type { Event, Prisma } from "@prisma/client";
 import type { QueryEventsRequest } from "./event.schema.js";
 
 export enum EventSortableFields {

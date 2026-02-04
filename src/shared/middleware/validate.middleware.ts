@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Request, Response, NextFunction } from "express";
 
 import { z } from "zod";
