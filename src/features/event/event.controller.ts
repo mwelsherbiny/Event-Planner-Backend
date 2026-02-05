@@ -20,7 +20,14 @@ const EventController = {
   },
 
   getEventDetails: async (req: Request, res: Response, next: NextFunction) => {
-    // TODO
+    const userId = req.payload!.userId;
+    const eventId = parseInt(req.params.id!, 10);
+
+    const eventDetails = await EventService.getEventDetails(eventId, userId);
+
+    return res
+      .status(200)
+      .json({ success: true, data: { event: eventDetails } });
   },
 
   listEventAttendees: async (

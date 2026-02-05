@@ -43,6 +43,30 @@ const EventService = {
     return await EventRepository.create(createEventData, ownerId);
   },
 
+  getEventDetails: async (eventId: number, requestSenderId: number) => {
+    // check if sender has permissions to view the event details
+    const userRoleAndPermissions = await assertHasPermission(
+      { eventId },
+      requestSenderId,
+      Permission.VIEW_EVENT,
+    );
+
+    console.log(userRoleAndPermissions);
+
+    const eventDetails = await EventRepository.getEventDetails(
+      eventId,
+      requestSenderId,
+    );
+    const permissions = userRoleAndPermissions.permissions;
+    const role = userRoleAndPermissions.role;
+
+    return {
+      ...eventDetails,
+      role,
+      permissions: permissions === null ? [] : Array.from(permissions),
+    };
+  },
+
   queryEvents: async (queryEventRequest: QueryEventsRequest) => {
     const { sort, ...rest } = queryEventRequest;
 
@@ -125,7 +149,11 @@ const EventService = {
         ? Permission.INVITE_ATTENDEES
         : Permission.INVITE_MANAGERS;
     await assertHasPermission(
-      event,
+      {
+        eventId: event.id,
+        ownerId: event.ownerId,
+        visibility: event.visibility,
+      },
       eventInviteData.senderId,
       requiredPermission,
     );
@@ -164,7 +192,15 @@ const EventService = {
         ? Permission.INVITE_ATTENDEES
         : Permission.INVITE_MANAGERS;
 
-    await assertHasPermission(event, userId, requiredPermission);
+    await assertHasPermission(
+      {
+        eventId: event.id,
+        ownerId: event.ownerId,
+        visibility: event.visibility,
+      },
+      userId,
+      requiredPermission,
+    );
 
     const updatedInvite = await InviteService.resendInvite(inviteId, userId);
     return updatedInvite;
@@ -188,22 +224,55 @@ const EventService = {
 };
 
 async function assertHasPermission(
-  event: FormattedEventData,
+  event: {
+    eventId: number;
+    ownerId?: number | null;
+    visibility?: EventVisibility;
+  },
   userId: number,
   permission: Permission,
-) {
+): Promise<{ permissions: Set<Permission> | null; role: EventRole | null }> {
+  if (event.ownerId === undefined || event.visibility === undefined) {
+    const { ownerId, visibility } =
+      await EventRepository.getEventVisibilityAndOwner(event.eventId);
+    event.ownerId = ownerId;
+    event.visibility = visibility;
+  }
+
+  if (event.ownerId === userId) {
+    return {
+      role: EventRole.OWNER,
+      permissions: new Set(Object.values(Permission)),
+    };
+  }
+
   if (
-    event.ownerId === userId ||
-    (event.visibility === EventVisibility.PUBLIC &&
-      permission === Permission.VIEW_EVENT)
+    event.visibility === EventVisibility.PUBLIC &&
+    permission === Permission.VIEW_EVENT
   ) {
-    return;
+    const userPermissions = await EventRepository.getMemberPermissions(
+      userId,
+      event.eventId,
+    );
+
+    return {
+      permissions: userPermissions?.permissions ?? new Set(),
+      role: userPermissions?.userRole ?? null,
+    };
   }
 
   const userPermissions = await EventRepository.getMemberPermissions(
     userId,
-    event.id,
+    event.eventId,
   );
+
+  if (!userPermissions) {
+    throw new AppError({
+      message: "User is not a member of the event",
+      statusCode: 403,
+      code: ErrorCode.USER_NOT_MEMBER_OF_EVENT,
+    });
+  }
 
   if (!userPermissions.permissions.has(permission)) {
     throw new AppError({
@@ -212,6 +281,11 @@ async function assertHasPermission(
       code: ErrorCode.NO_PERMISSION,
     });
   }
+
+  return {
+    permissions: userPermissions.permissions,
+    role: userPermissions.userRole,
+  };
 }
 
 async function assertEventStateAcceptsNewMembers(

@@ -75,6 +75,59 @@ const EventRepository = {
     return events;
   },
 
+  getEventDetails: async (eventId: number, userId?: number) => {
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+      include: {
+        owner: {
+          omit: {
+            passwordHash: true,
+            isVerified: true,
+          },
+        },
+        ...(userId && {
+          userRoles: {
+            where: {
+              userId,
+              eventId,
+            },
+            select: {
+              attendanceCode: true,
+              attended: true,
+            },
+          },
+        }),
+        ...attendeeCountInclude,
+      },
+    });
+
+    if (!event) {
+      throw new AppError({
+        message: "Event not found",
+        statusCode: 404,
+        code: ErrorCode.EVENT_NOT_FOUND,
+      });
+    }
+
+    const { _count, userRoles, ...rest } = event;
+    const currentAttendees = _count.userRoles;
+    const { attendanceCode, attended } = userRoles?.[0] ?? {};
+
+    return {
+      currentAttendees,
+      attendanceCode,
+      attended,
+      ...rest,
+      state: getEventState({
+        state: event.state,
+        startAt: event.startAt,
+        duration: event.duration,
+        currentAttendees,
+        maxAttendees: event.maxAttendees,
+      }),
+    };
+  },
+
   getById: async (eventId: number): Promise<FormattedEventData> => {
     const event = await prisma.event.findUnique({
       where: { id: eventId },
@@ -103,6 +156,26 @@ const EventRepository = {
         maxAttendees: event.maxAttendees,
       }),
     };
+  },
+
+  getEventVisibilityAndOwner: async (eventId: number) => {
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: {
+        ownerId: true,
+        visibility: true,
+      },
+    });
+
+    if (!event) {
+      throw new AppError({
+        message: "Event not found",
+        statusCode: 404,
+        code: ErrorCode.EVENT_NOT_FOUND,
+      });
+    }
+
+    return event;
   },
 
   addAttendee: async (
@@ -168,11 +241,7 @@ const EventRepository = {
     });
 
     if (!user) {
-      throw new AppError({
-        message: "User is not a member of the event",
-        statusCode: 403,
-        code: ErrorCode.USER_NOT_MEMBER_OF_EVENT,
-      });
+      return null;
     }
 
     const userRole = RoleCache.getRoleById(user.roleId);
@@ -186,7 +255,7 @@ const EventRepository = {
       permissions.add(perm);
     }
 
-    return { userId, permissions };
+    return { userId, permissions, userRole };
   },
 };
 

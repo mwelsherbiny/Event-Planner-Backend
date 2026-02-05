@@ -27,6 +27,7 @@ enum EventState {
 enum EventRole {
   ATTENDEE
   MANAGER
+  OWNER
 }
 
 enum NotificationType {
