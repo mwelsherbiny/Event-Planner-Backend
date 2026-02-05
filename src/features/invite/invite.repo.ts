@@ -17,25 +17,59 @@ import AppError from "../../errors/AppError.js";
 
 const InviteRepository = {
   create: async (inviteData: InviteData) => {
-    const createdInvite = await prisma.invite.create({
-      data: {
-        eventId: inviteData.eventId,
-        senderId: inviteData.senderId,
-        receiverId: inviteData.receiverId,
-        roleId: RoleCache.roleIdMap.get(inviteData.role)!,
-        invitePermissions: {
-          createMany: {
-            data: Array.from(inviteData.permissions || []).map(
-              (permission) => ({
-                permission,
-              }),
-            ),
+    try {
+      const createdInvite = await prisma.invite.create({
+        data: {
+          eventId: inviteData.eventId,
+          senderId: inviteData.senderId,
+          receiverId: inviteData.receiverId,
+          roleId: RoleCache.roleIdMap.get(inviteData.role)!,
+          invitePermissions: {
+            createMany: {
+              data: Array.from(inviteData.permissions || []).map(
+                (permission) => ({
+                  permission,
+                }),
+              ),
+            },
           },
         },
-      },
+      });
+
+      const { roleId, ...rest } = createdInvite;
+      const role = RoleCache.getRoleById(roleId);
+
+      return { ...rest, role };
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        throw new AppError({
+          message: "User has already been invited to this event",
+          statusCode: 400,
+          code: ErrorCode.USER_ALREADY_INVITED,
+        });
+      }
+
+      throw AppError.internalError();
+    }
+  },
+
+  getInviteById: async (inviteId: number) => {
+    const invite = await prisma.invite.findUnique({
+      where: { id: inviteId },
     });
 
-    const { roleId, ...rest } = createdInvite;
+    if (!invite) {
+      throw new AppError({
+        message: "Invite not found",
+        statusCode: 404,
+        code: ErrorCode.INVITE_CANNOT_BE_VIEWED,
+      });
+    }
+
+    const { roleId, ...rest } = invite;
     const role = RoleCache.getRoleById(roleId);
 
     return { ...rest, role };
@@ -49,6 +83,7 @@ const InviteRepository = {
       },
       select: {
         id: true,
+        receiverId: true,
         status: true,
         createdAt: true,
         roleId: true,
@@ -64,7 +99,11 @@ const InviteRepository = {
     });
 
     if (!inviteDetails) {
-      return null;
+      throw new AppError({
+        message: "Invite not found or access denied",
+        statusCode: 404,
+        code: ErrorCode.INVITE_CANNOT_BE_VIEWED,
+      });
     }
 
     const { roleId, invitePermissions, ...rest } = inviteDetails;
@@ -107,7 +146,11 @@ const InviteRepository = {
     });
 
     if (!invite) {
-      return null;
+      throw new AppError({
+        message: "Invite not found or access denied",
+        statusCode: 404,
+        code: ErrorCode.INVITE_CANNOT_BE_VIEWED,
+      });
     }
 
     const { roleId, ...rest } = invite;

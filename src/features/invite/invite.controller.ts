@@ -41,18 +41,6 @@ const InviteController = {
       success: true,
     });
   },
-
-  resendInvite: async (req: Request, res: Response, next: NextFunction) => {
-    const userId = req.payload!.userId;
-    const inviteId = parseInt(req.params.id!, 10);
-
-    const updatedInvite = await InviteService.resendInvite(inviteId, userId);
-
-    return res.status(200).json({
-      success: true,
-      data: { invite: updatedInvite },
-    });
-  },
 };
 
 export default InviteController;

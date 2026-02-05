@@ -35,6 +35,10 @@ eventRouter.post(
   validateData(eventInviteRequestSchema),
   EventController.inviteUserForEvent,
 );
+eventRouter.post(
+  "/:id/invites/:inviteId/resend",
+  EventController.resendEventInvite,
+);
 
 eventRouter.patch("/:id", EventController.updateEvent);
 

@@ -16,6 +16,7 @@ import UserRepository from "../user/user.repo.js";
 import InviteService from "../invite/invite.service.js";
 import UserService from "../user/user.service.js";
 import type { InviteData, StoredInviteData } from "../invite/invite.types.js";
+import InviteRepository from "../invite/invite.repo.js";
 
 const EventService = {
   createEvent: async (
@@ -53,14 +54,6 @@ const EventService = {
 
   addAttendeeToPublicEvent: async (eventId: number, userId: number) => {
     const event = await EventRepository.getById(eventId);
-
-    if (!event) {
-      throw new AppError({
-        message: "Event not found",
-        statusCode: 404,
-        code: ErrorCode.EVENT_NOT_FOUND,
-      });
-    }
 
     if (event.visibility !== EventVisibility.PUBLIC) {
       throw new AppError({
@@ -143,23 +136,38 @@ const EventService = {
     };
 
     // create the invite
-    try {
-      const createdInvite = await InviteService.createEventInvite(inviteData);
-      return createdInvite;
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002"
-      ) {
-        throw new AppError({
-          message: "User has already been invited to this event",
-          statusCode: 400,
-          code: ErrorCode.USER_ALREADY_INVITED,
-        });
-      }
+    const createdInvite = await InviteService.createEventInvite(inviteData);
+    return createdInvite;
+  },
 
-      throw AppError.internalError();
-    }
+  resendEventUserInvite: async (
+    eventId: number,
+    userId: number,
+    inviteId: number,
+  ) => {
+    // check if event exists
+    const event = await assertEventExists(eventId);
+
+    // get old invite
+    const oldInvite = await InviteRepository.getInviteById(inviteId);
+
+    // check if event can accept new attendees
+    // state must be open or closed and for attendees invite, it must be not full
+    await assertEventStateAcceptsNewMembers(event, oldInvite.role);
+
+    // check if user can be invited
+    await assertCanBeInvited(event, oldInvite.receiverId);
+
+    // check if sender has permission to invite
+    const requiredPermission =
+      oldInvite.role === EventRole.ATTENDEE
+        ? Permission.INVITE_ATTENDEES
+        : Permission.INVITE_MANAGERS;
+
+    await assertHasPermission(event, userId, requiredPermission);
+
+    const updatedInvite = await InviteService.resendInvite(inviteId, userId);
+    return updatedInvite;
   },
 
   addInvitedUser: async (userId: number, invite: StoredInviteData) => {
@@ -178,6 +186,33 @@ const EventService = {
     }
   },
 };
+
+async function assertHasPermission(
+  event: FormattedEventData,
+  userId: number,
+  permission: Permission,
+) {
+  if (
+    event.ownerId === userId ||
+    (event.visibility === EventVisibility.PUBLIC &&
+      permission === Permission.VIEW_EVENT)
+  ) {
+    return;
+  }
+
+  const userPermissions = await EventRepository.getMemberPermissions(
+    userId,
+    event.id,
+  );
+
+  if (!userPermissions.permissions.has(permission)) {
+    throw new AppError({
+      message: "User does not have permission to invite attendees",
+      statusCode: 403,
+      code: ErrorCode.NO_PERMISSION,
+    });
+  }
+}
 
 async function assertEventStateAcceptsNewMembers(
   event: FormattedEventData,
@@ -221,48 +256,8 @@ async function assertCanBeInvited(
   }
 }
 
-async function assertHasPermission(
-  event: FormattedEventData,
-  userId: number,
-  permission: Permission,
-) {
-  if (event.ownerId === userId) {
-    return;
-  }
-
-  const userPermissions = await EventRepository.getMemberPermissions(
-    userId,
-    event.id,
-  );
-
-  if (!userPermissions) {
-    throw new AppError({
-      message: "User is not a member of the event",
-      statusCode: 403,
-      code: ErrorCode.USER_NOT_MEMBER_OF_EVENT,
-    });
-  }
-
-  if (!userPermissions.permissions.has(permission)) {
-    throw new AppError({
-      message: "User does not have permission to invite attendees",
-      statusCode: 403,
-      code: ErrorCode.NO_PERMISSION,
-    });
-  }
-}
-
 async function assertEventExists(eventId: number) {
-  const event = await EventRepository.getById(eventId);
-  if (!event) {
-    throw new AppError({
-      message: "Event not found",
-      statusCode: 404,
-      code: ErrorCode.EVENT_NOT_FOUND,
-    });
-  }
-
-  return event;
+  return await EventRepository.getById(eventId);
 }
 
 export default EventService;

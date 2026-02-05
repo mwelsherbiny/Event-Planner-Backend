@@ -9,6 +9,8 @@ import type {
 import { getEventState } from "./event.util.js";
 import { RoleCache } from "../../shared/util/cache.util.js";
 import { attendeeCountInclude } from "../../config/constants.js";
+import { ErrorCode } from "../../errors/error-codes.js";
+import AppError from "../../errors/AppError.js";
 
 const EventRepository = {
   create: async (createEventData: CreateEventData, ownerId: number) => {
@@ -73,17 +75,21 @@ const EventRepository = {
     return events;
   },
 
-  getById: async (eventId: number): Promise<FormattedEventData | null> => {
+  getById: async (eventId: number): Promise<FormattedEventData> => {
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       include: attendeeCountInclude,
     });
 
     if (!event) {
-      return null;
+      throw new AppError({
+        message: "Event not found",
+        statusCode: 404,
+        code: ErrorCode.EVENT_NOT_FOUND,
+      });
     }
 
-    const { _count, ...rest } = event!;
+    const { _count, ...rest } = event;
     const currentAttendees = _count.userRoles;
 
     return {
@@ -162,7 +168,11 @@ const EventRepository = {
     });
 
     if (!user) {
-      return null;
+      throw new AppError({
+        message: "User is not a member of the event",
+        statusCode: 403,
+        code: ErrorCode.USER_NOT_MEMBER_OF_EVENT,
+      });
     }
 
     const userRole = RoleCache.getRoleById(user.roleId);

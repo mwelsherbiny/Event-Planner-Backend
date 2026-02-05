@@ -8,6 +8,7 @@ import type {
 import EventService from "./event.service.js";
 import uploadImage from "../../integrations/cloudinary/imageUpload.js";
 import type { EventInviteData } from "./event.types.js";
+import InviteService from "../invite/invite.service.js";
 
 const EventController = {
   queryEvents: async (req: Request, res: Response) => {
@@ -95,6 +96,27 @@ const EventController = {
     return res
       .status(200)
       .json({ success: true, data: { invite: createdInvite } });
+  },
+
+  resendEventInvite: async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    const userId = req.payload!.userId;
+    const eventId = parseInt(req.params.id!, 10);
+    const inviteId = parseInt(req.params.inviteId!, 10);
+
+    const updatedInvite = await EventService.resendEventUserInvite(
+      eventId,
+      userId,
+      inviteId,
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: { invite: updatedInvite },
+    });
   },
 
   updateEvent: async (req: Request, res: Response, next: NextFunction) => {

@@ -6,6 +6,5 @@ const inviteRouter = Router();
 inviteRouter.get("/:id", InviteController.getInviteDetails);
 inviteRouter.post("/:id/acceptance", InviteController.acceptInvite);
 inviteRouter.post("/:id/rejection", InviteController.rejectInvite);
-inviteRouter.post("/:id/resend", InviteController.resendInvite);
 
 export default inviteRouter;

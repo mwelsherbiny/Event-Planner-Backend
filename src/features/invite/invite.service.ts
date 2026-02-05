@@ -1,6 +1,4 @@
 import { InviteStatus } from "@prisma/client";
-import AppError from "../../errors/AppError.js";
-import { ErrorCode } from "../../errors/error-codes.js";
 import NotificationService from "../notification/notification.service.js";
 import InviteRepository from "./invite.repo.js";
 import type { InviteData } from "./invite.types.js";
@@ -23,19 +21,16 @@ const InviteService = {
     };
   },
 
+  getInviteById: async (inviteId: number) => {
+    const invite = await InviteRepository.getInviteById(inviteId);
+    return invite;
+  },
+
   getInviteDetails: async (inviteId: number, requestSenderId: number) => {
     const inviteDetails = await InviteRepository.getInviteDetails(
       inviteId,
       requestSenderId,
     );
-
-    if (!inviteDetails) {
-      throw new AppError({
-        message: "Invite not found or access denied",
-        statusCode: 404,
-        code: ErrorCode.INVITE_CANNOT_BE_VIEWED,
-      });
-    }
 
     return inviteDetails;
   },
