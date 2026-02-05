@@ -29,7 +29,7 @@ eventRouter.post(
   validateData(createEventSchema),
   EventController.createEvent,
 );
-eventRouter.post("/:id/attendees", EventController.addAttendeeToEvent);
+eventRouter.post("/:id/attendees", EventController.addAttendeeToPublicEvent);
 eventRouter.post(
   "/:id/invites",
   validateData(eventInviteRequestSchema),

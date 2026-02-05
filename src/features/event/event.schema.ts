@@ -86,9 +86,20 @@ export const queryEventsSchema = z
   .and(paginationSchema);
 export type QueryEventsRequest = z.infer<typeof queryEventsSchema>;
 
-export const eventInviteRequestSchema = z.object({
-  receiverId: z.number().int().positive(),
-  role: z.enum(EventRole),
-  permissions: z.set(z.enum(Permission)).optional(),
-});
+export const eventInviteRequestSchema = z
+  .object({
+    receiverId: z.number().int().positive(),
+    role: z.enum(EventRole),
+    permissions: z.array(z.enum(Permission)).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.role === EventRole.ATTENDEE && data.permissions !== undefined) {
+      ctx.addIssue({
+        path: ["permissions"],
+        code: z.ZodIssueCode.custom,
+        message: "Attendees cannot have permissions",
+        params: { code: "attendees_cannot_have_permissions" },
+      });
+    }
+  });
 export type EventInviteRequest = z.infer<typeof eventInviteRequestSchema>;

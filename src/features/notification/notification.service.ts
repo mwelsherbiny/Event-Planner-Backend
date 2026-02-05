@@ -65,6 +65,9 @@ const NotificationService = {
     notification: CreateNotificationData,
     userIds: [number, ...number[]],
   ) => {
+    // Store the notification in the database for the users
+    await NotificationService.storeNotificationForUsers(notification, userIds);
+
     // Find the registration tokens for the given user IDs
     const fcmTokensStrings = await getFcmTokensStrings(userIds);
 
@@ -72,9 +75,6 @@ const NotificationService = {
       // No valid FCM tokens found, skip sending notification
       return;
     }
-
-    // Store the notification in the database for the users
-    await NotificationService.storeNotificationForUsers(notification, userIds);
 
     // Send the notification via Firebase Cloud Messaging
     const result = await sendFcmNotification(
@@ -97,6 +97,10 @@ const NotificationService = {
         }),
       );
     }
+  },
+
+  deleteInviteNotification: async (inviteId: number) => {
+    await NotificationRepository.deleteInviteNotification(inviteId);
   },
 };
 

@@ -144,7 +144,7 @@ model Notification {
   targetId   Int?
   targetType NotificationTarget?
 
-  data Json @default("{}")
+  data Json
 
   notificationReceivers NotificationReceiver[]
 }
@@ -164,9 +164,12 @@ model NotificationReceiver {
 }
 
 model Invite {
-  id     Int          @id @default(autoincrement())
-  status InviteStatus @default(PENDING)
-  role   EventRole
+  id        Int          @id @default(autoincrement())
+  status    InviteStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+
+  roleId Int
+  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   senderId Int
   sender   User @relation("SentInvites", fields: [senderId], references: [id], onDelete: Cascade)
@@ -178,6 +181,8 @@ model Invite {
   event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   invitePermissions InvitePermissions[]
+
+  @@unique([receiverId, eventId])
 }
 
 model InvitePermissions {
@@ -229,6 +234,7 @@ model Role {
 
   rolePermissions RolePermission[]
   userEventRoles  UserEventRole[]
+  invites         Invite[]
 }
 
 model RolePermission {
@@ -249,10 +255,12 @@ model UserEventRole {
   roleId Int
   role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
-  attendanceCode String? @db.Uuid
+  attendanceCode String?  @db.Uuid
   attended       Boolean? @default(false)
 
-  @@id([userId, eventId, roleId])
+  permissions UserEventPermission[]
+
+  @@id([userId, eventId])
   @@index([userId, eventId])
 }
 
@@ -263,7 +271,8 @@ model UserEventPermission {
   eventId Int
   event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-  permission Permission
+  permission    Permission
+  userEventRole UserEventRole @relation(fields: [userId, eventId], references: [userId, eventId], onDelete: Cascade)
 
   @@id([userId, eventId, permission])
   @@index([userId, eventId])

@@ -15,7 +15,7 @@ import AppError from "../../errors/AppError.js";
 import UserRepository from "../user/user.repo.js";
 import InviteService from "../invite/invite.service.js";
 import UserService from "../user/user.service.js";
-import type { InviteData } from "../invite/invite.types.js";
+import type { InviteData, StoredInviteData } from "../invite/invite.types.js";
 
 const EventService = {
   createEvent: async (
@@ -51,7 +51,7 @@ const EventService = {
     return await EventRepository.query(queryEventData);
   },
 
-  addAttendeeToEvent: async (eventId: number, userId: number) => {
+  addAttendeeToPublicEvent: async (eventId: number, userId: number) => {
     const event = await EventRepository.getById(eventId);
 
     if (!event) {
@@ -101,6 +101,8 @@ const EventService = {
           code: ErrorCode.USER_ALREADY_ATTENDEE,
         });
       }
+
+      throw AppError.internalError();
     }
   },
 
@@ -155,6 +157,24 @@ const EventService = {
           code: ErrorCode.USER_ALREADY_INVITED,
         });
       }
+
+      throw AppError.internalError();
+    }
+  },
+
+  addInvitedUser: async (userId: number, invite: StoredInviteData) => {
+    if (invite.role === EventRole.ATTENDEE) {
+      return await EventRepository.addAttendee(
+        invite.eventId,
+        userId,
+        generateAttendanceCode(),
+      );
+    } else if (invite.role === EventRole.MANAGER) {
+      await EventRepository.addManager(
+        invite.eventId,
+        userId,
+        invite.permissions ?? [],
+      );
     }
   },
 };

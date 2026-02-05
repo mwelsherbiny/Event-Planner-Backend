@@ -1,3 +1,4 @@
+import { NotificationTarget } from "@prisma/client";
 import prisma from "../../../integrations/db/db.config.js";
 import type { CreateNotificationData } from "../notification.types.js";
 
@@ -56,6 +57,15 @@ const NotificationRepository = {
     await prisma.notificationReceiver.updateMany({
       where: { receiverId: userId, read: false },
       data: { read: true },
+    });
+  },
+
+  deleteInviteNotification: async (inviteId: number) => {
+    await prisma.notification.deleteMany({
+      where: {
+        targetId: inviteId,
+        targetType: NotificationTarget.INVITE,
+      },
     });
   },
 };

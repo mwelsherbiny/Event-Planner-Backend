@@ -58,7 +58,7 @@ const EventController = {
       .json({ success: true, data: { event: createdEvent } });
   },
 
-  addAttendeeToEvent: async (
+  addAttendeeToPublicEvent: async (
     req: Request,
     res: Response,
     next: NextFunction,
@@ -66,7 +66,7 @@ const EventController = {
     const eventId = parseInt(req.params.id!, 10);
     const userId = req.payload!.userId;
 
-    const attendanceCode = await EventService.addAttendeeToEvent(
+    const attendanceCode = await EventService.addAttendeeToPublicEvent(
       eventId,
       userId,
     );

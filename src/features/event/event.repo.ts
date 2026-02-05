@@ -116,6 +116,25 @@ const EventRepository = {
     return result.attendanceCode;
   },
 
+  addManager: async (
+    eventId: number,
+    userId: number,
+    permissions: Permission[],
+  ) => {
+    await prisma.userEventRole.create({
+      data: {
+        eventId,
+        userId,
+        roleId: RoleCache.roleIdMap.get(EventRole.MANAGER)!,
+        permissions: {
+          create: permissions.map((permission) => ({
+            permission,
+          })),
+        },
+      },
+    });
+  },
+
   hasMember: async (userId: number, eventId: number) => {
     const count = await prisma.userEventRole.count({
       where: {
