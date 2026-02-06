@@ -280,6 +280,8 @@ const EventService = {
     // if the owner is leaving the event, cancel the event and notify attendees
     const event = await EventRepository.getById(eventId);
 
+    await assertEventNotStatic(event.state);
+
     if (event.ownerId === userId) {
       await EventRepository.updateEventState(
         eventId,
@@ -319,7 +321,66 @@ const EventService = {
       membersIds as [number, ...number[]],
     );
   },
+
+  removeAttendee: async (
+    eventId: number,
+    attendeeId: number,
+    requestSenderId: number,
+  ) => {
+    // verify that event is not static
+    const event = await EventRepository.getById(eventId);
+    await assertEventNotStatic(event.state);
+
+    // if the user is trying to remove themselves, they can leave the event without needing permissions
+    if (attendeeId === requestSenderId) {
+      return await EventService.leaveEvent(eventId, attendeeId);
+    }
+    await assertHasPermission(
+      { eventId, ownerId: event.ownerId, visibility: event.visibility },
+      requestSenderId,
+      Permission.REMOVE_REGISTERED_USERS,
+    );
+
+    await EventRepository.removeAttendee(eventId, attendeeId);
+  },
+
+  removeManager: async (
+    eventId: number,
+    managerId: number,
+    requestSenderId: number,
+  ) => {
+    // verify that event is not static
+    const event = await EventRepository.getById(eventId);
+    await assertEventNotStatic(event.state);
+
+    // if the user is trying to remove themselves, they can leave the event without needing permissions
+    if (managerId === requestSenderId) {
+      return await EventService.leaveEvent(eventId, managerId);
+    }
+    await assertHasPermission(
+      { eventId, ownerId: event.ownerId, visibility: event.visibility },
+      requestSenderId,
+      Permission.REMOVE_MANAGERS,
+    );
+
+    await EventRepository.removeManager(eventId, managerId);
+  },
 };
+
+async function assertEventNotStatic(eventState: GeneratedEventState) {
+  if (
+    eventState === GeneratedEventState.ONGOING ||
+    eventState === GeneratedEventState.COMPLETED ||
+    eventState === GeneratedEventState.CANCELLED
+  ) {
+    throw new AppError({
+      message:
+        "Cannot perform this action on an event that is ongoing, completed, or cancelled",
+      statusCode: 400,
+      code: ErrorCode.INVALID_EVENT_STATE,
+    });
+  }
+}
 
 async function assertHasPermission(
   event: {

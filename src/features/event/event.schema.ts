@@ -101,5 +101,17 @@ export const eventInviteRequestSchema = z
         params: { code: "attendees_cannot_have_permissions" },
       });
     }
+
+    if (
+      data.permissions &&
+      data.permissions.includes(Permission.REMOVE_MANAGERS)
+    ) {
+      ctx.addIssue({
+        path: ["permissions"],
+        code: z.ZodIssueCode.custom,
+        message: "Managers cannot have this permission",
+        params: { code: "managers_cannot_have_permission" },
+      });
+    }
   });
 export type EventInviteRequest = z.infer<typeof eventInviteRequestSchema>;

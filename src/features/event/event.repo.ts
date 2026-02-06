@@ -381,6 +381,26 @@ const EventRepository = {
       throw AppError.internalError();
     }
   },
+
+  removeAttendee: async (eventId: number, attendeeId: number) => {
+    await prisma.userEventRole.deleteMany({
+      where: {
+        eventId,
+        userId: attendeeId,
+        roleId: RoleCache.getRoleId(EventRole.ATTENDEE),
+      },
+    });
+  },
+
+  removeManager: async (eventId: number, managerId: number) => {
+    await prisma.userEventRole.deleteMany({
+      where: {
+        eventId,
+        userId: managerId,
+        roleId: RoleCache.getRoleId(EventRole.MANAGER),
+      },
+    });
+  },
 };
 
 export default EventRepository;

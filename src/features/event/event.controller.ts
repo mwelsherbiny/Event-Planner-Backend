@@ -171,11 +171,23 @@ const EventController = {
   },
 
   removeAttendee: async (req: Request, res: Response, next: NextFunction) => {
-    // TODO
+    const userId = req.payload!.userId;
+    const eventId = parseInt(req.params.id!, 10);
+    const attendeeId = parseInt(req.params.attendeeId!, 10);
+
+    await EventService.removeAttendee(eventId, attendeeId, userId);
+
+    return res.status(200).json({ success: true });
   },
 
   removeManager: async (req: Request, res: Response, next: NextFunction) => {
-    // TODO
+    const userId = req.payload!.userId;
+    const eventId = parseInt(req.params.id!, 10);
+    const managerId = parseInt(req.params.managerId!, 10);
+
+    await EventService.removeManager(eventId, managerId, userId);
+
+    return res.status(200).json({ success: true });
   },
 };
 
