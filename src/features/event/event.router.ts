@@ -10,6 +10,7 @@ import {
   queryEventsSchema,
 } from "./event.schema.js";
 import { upload } from "../../shared/middleware/upload.middleware.js";
+import { paginationSchema } from "../../shared/schemas/paginationSchema.js";
 
 const eventRouter = Router();
 
@@ -19,9 +20,21 @@ eventRouter.get(
   EventController.queryEvents,
 );
 eventRouter.get("/:id", EventController.getEventDetails);
-eventRouter.get("/:id/attendees", EventController.listEventAttendees);
-eventRouter.get("/:id/managers", EventController.listEventManagers);
-eventRouter.get("/:id/invites", EventController.listEventInvites);
+eventRouter.get(
+  "/:id/attendees",
+  validateQuery(paginationSchema),
+  EventController.listEventAttendees,
+);
+eventRouter.get(
+  "/:id/managers",
+  validateQuery(paginationSchema),
+  EventController.listEventManagers,
+);
+eventRouter.get(
+  "/:id/invites",
+  validateQuery(paginationSchema),
+  EventController.listEventInvites,
+);
 
 eventRouter.post(
   "/",
@@ -42,7 +55,7 @@ eventRouter.post(
 
 eventRouter.patch("/:id", EventController.updateEvent);
 
-eventRouter.delete("/:id/members", EventController.leaveEvent);
+eventRouter.delete("/:id/members/me", EventController.leaveEvent);
 eventRouter.delete(
   "/:id/attendees/:attendeeId",
   EventController.removeAttendee,

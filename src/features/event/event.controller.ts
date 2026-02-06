@@ -9,6 +9,7 @@ import EventService from "./event.service.js";
 import uploadImage from "../../integrations/cloudinary/imageUpload.js";
 import type { EventInviteData } from "./event.types.js";
 import InviteService from "../invite/invite.service.js";
+import type { PaginationData } from "../../shared/schemas/paginationSchema.js";
 
 const EventController = {
   queryEvents: async (req: Request, res: Response) => {
@@ -35,7 +36,17 @@ const EventController = {
     res: Response,
     next: NextFunction,
   ) => {
-    // TODO
+    const userId = req.payload!.userId;
+    const eventId = parseInt(req.params.id!, 10);
+    const paginationData = req.parsedQuery as PaginationData;
+
+    const attendees = await EventService.listEventAttendees(
+      eventId,
+      userId,
+      paginationData,
+    );
+
+    return res.status(200).json({ success: true, data: { attendees } });
   },
 
   listEventManagers: async (
@@ -43,11 +54,31 @@ const EventController = {
     res: Response,
     next: NextFunction,
   ) => {
-    // TODO
+    const userId = req.payload!.userId;
+    const eventId = parseInt(req.params.id!, 10);
+    const paginationData = req.parsedQuery as PaginationData;
+
+    const managers = await EventService.listEventManagers(
+      eventId,
+      userId,
+      paginationData,
+    );
+
+    return res.status(200).json({ success: true, data: { managers } });
   },
 
   listEventInvites: async (req: Request, res: Response, next: NextFunction) => {
-    // TODO
+    const userId = req.payload!.userId;
+    const eventId = parseInt(req.params.id!, 10);
+    const paginationData = req.parsedQuery as PaginationData;
+
+    const invites = await EventService.listEventInvites(
+      eventId,
+      userId,
+      paginationData,
+    );
+
+    return res.status(200).json({ success: true, data: { invites } });
   },
 
   createEvent: async (req: Request, res: Response, next: NextFunction) => {

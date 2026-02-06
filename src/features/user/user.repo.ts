@@ -103,6 +103,9 @@ const UserRepository = {
       take: paginationData.limit,
       omit: eventOmitFields,
       include: attendeeCountInclude,
+      orderBy: {
+        startAt: "desc",
+      },
     });
 
     const formattedEvents = events.map((event) => {
@@ -146,6 +149,9 @@ const UserRepository = {
       take: paginationData.limit,
       omit: eventOmitFields,
       include: attendeeCountInclude,
+      orderBy: {
+        startAt: "desc",
+      },
     });
 
     const formattedEvents = events.map((event) => {

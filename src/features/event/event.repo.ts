@@ -8,9 +8,13 @@ import type {
 } from "./event.types.js";
 import { getEventState } from "./event.util.js";
 import { RoleCache } from "../../shared/util/cache.util.js";
-import { attendeeCountInclude } from "../../config/constants.js";
+import {
+  attendeeCountInclude,
+  userOmitFields,
+} from "../../config/constants.js";
 import { ErrorCode } from "../../errors/error-codes.js";
 import AppError from "../../errors/AppError.js";
+import type { PaginationData } from "../../shared/schemas/paginationSchema.js";
 
 const EventRepository = {
   create: async (createEventData: CreateEventData, ownerId: number) => {
@@ -256,6 +260,60 @@ const EventRepository = {
     }
 
     return { userId, permissions, userRole };
+  },
+
+  listAttendees: async (eventId: number, paginationData: PaginationData) => {
+    const attendees = await prisma.userEventRole.findMany({
+      where: {
+        eventId,
+        roleId: RoleCache.getRoleId(EventRole.ATTENDEE),
+      },
+      select: {
+        user: {
+          omit: userOmitFields,
+        },
+      },
+      skip: (paginationData.page - 1) * paginationData.limit,
+      take: paginationData.limit,
+    });
+
+    return attendees.map((attendee) => attendee.user);
+  },
+
+  listManagers: async (eventId: number, paginationData: PaginationData) => {
+    const managers = await prisma.userEventRole.findMany({
+      where: {
+        eventId,
+        roleId: RoleCache.getRoleId(EventRole.MANAGER),
+      },
+      select: {
+        user: {
+          omit: userOmitFields,
+        },
+      },
+      skip: (paginationData.page - 1) * paginationData.limit,
+      take: paginationData.limit,
+    });
+
+    return managers.map((manager) => manager.user);
+  },
+
+  listInvites: async (eventId: number, paginationData: PaginationData) => {
+    const invites = await prisma.invite.findMany({
+      where: { eventId },
+      include: {
+        receiver: {
+          omit: userOmitFields,
+        },
+      },
+      skip: (paginationData.page - 1) * paginationData.limit,
+      take: paginationData.limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return invites;
   },
 };
 

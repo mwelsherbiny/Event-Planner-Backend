@@ -17,6 +17,7 @@ import InviteService from "../invite/invite.service.js";
 import UserService from "../user/user.service.js";
 import type { InviteData, StoredInviteData } from "../invite/invite.types.js";
 import InviteRepository from "../invite/invite.repo.js";
+import type { PaginationData } from "../../shared/schemas/paginationSchema.js";
 
 const EventService = {
   createEvent: async (
@@ -221,6 +222,48 @@ const EventService = {
       );
     }
   },
+
+  listEventAttendees: async (
+    eventId: number,
+    requestSenderId: number,
+    paginationData: PaginationData,
+  ) => {
+    await assertHasPermission(
+      { eventId },
+      requestSenderId,
+      Permission.VIEW_ATTENDEES,
+    );
+
+    return await EventRepository.listAttendees(eventId, paginationData);
+  },
+
+  listEventManagers: async (
+    eventId: number,
+    requestSenderId: number,
+    paginationData: PaginationData,
+  ) => {
+    await assertHasPermission(
+      { eventId },
+      requestSenderId,
+      Permission.VIEW_MANAGERS,
+    );
+
+    return await EventRepository.listManagers(eventId, paginationData);
+  },
+
+  listEventInvites: async (
+    eventId: number,
+    requestSenderId: number,
+    paginationData: PaginationData,
+  ) => {
+    await assertHasPermission(
+      { eventId },
+      requestSenderId,
+      Permission.VIEW_INVITES,
+    );
+
+    return await EventRepository.listInvites(eventId, paginationData);
+  },
 };
 
 async function assertHasPermission(
@@ -276,7 +319,7 @@ async function assertHasPermission(
 
   if (!userPermissions.permissions.has(permission)) {
     throw new AppError({
-      message: "User does not have permission to invite attendees",
+      message: "User does not have permission to do this action",
       statusCode: 403,
       code: ErrorCode.NO_PERMISSION,
     });
