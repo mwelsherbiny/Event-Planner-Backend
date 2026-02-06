@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import EventRepository from "./event.repo.js";
-import { EventRole, EventVisibility, Permission, Prisma } from "@prisma/client";
+import {
+  EventRole,
+  EventVisibility,
+  NotificationType,
+  Permission,
+  Prisma,
+} from "@prisma/client";
 import type { CreateEventRequest, QueryEventsRequest } from "./event.schema.js";
 import {
   GeneratedEventState,
@@ -18,6 +24,8 @@ import UserService from "../user/user.service.js";
 import type { InviteData, StoredInviteData } from "../invite/invite.types.js";
 import InviteRepository from "../invite/invite.repo.js";
 import type { PaginationData } from "../../shared/schemas/paginationSchema.js";
+import NotificationService from "../notification/notification.service.js";
+import type { CreateNotificationData } from "../notification/notification.types.js";
 
 const EventService = {
   createEvent: async (
@@ -263,6 +271,53 @@ const EventService = {
     );
 
     return await EventRepository.listInvites(eventId, paginationData);
+  },
+
+  leaveEvent: async (eventId: number, userId: number) => {
+    // leaving doesn't require permissions
+    // if the user is not a member of the event, it's still considered a success
+    // check if user is in the userRole table or is the owner of the event
+    // if the owner is leaving the event, cancel the event and notify attendees
+    const event = await EventRepository.getById(eventId);
+
+    if (event.ownerId === userId) {
+      await EventRepository.updateEventState(
+        eventId,
+        GeneratedEventState.CANCELLED,
+      );
+
+      await EventRepository.removeOwner(event.id);
+
+      await EventService.notifyEventCancellation(event);
+    } else {
+      await EventRepository.removeMember(eventId, userId);
+    }
+  },
+
+  notifyEventCancellation: async (event: FormattedEventData) => {
+    const membersIds = await EventRepository.getAllMembersIds(event.id);
+
+    // skip if there are no attendees
+    if (membersIds.length < 1) {
+      return;
+    }
+
+    const notification: CreateNotificationData = {
+      type: NotificationType.CANCELLATION,
+      targetId: event.id,
+      targetType: "EVENT",
+      data: {
+        eventId: event.id,
+        eventName: event.name,
+        title: "Event Cancelled",
+        body: `${event.name} has been cancelled.`,
+      },
+    };
+
+    await NotificationService.sendNotification(
+      notification,
+      membersIds as [number, ...number[]],
+    );
   },
 };
 

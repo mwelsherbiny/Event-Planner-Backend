@@ -162,7 +162,12 @@ const EventController = {
   },
 
   leaveEvent: async (req: Request, res: Response, next: NextFunction) => {
-    // TODO
+    const userId = req.payload!.userId;
+    const eventId = parseInt(req.params.id!, 10);
+
+    await EventService.leaveEvent(eventId, userId);
+
+    return res.status(200).json({ success: true });
   },
 
   removeAttendee: async (req: Request, res: Response, next: NextFunction) => {

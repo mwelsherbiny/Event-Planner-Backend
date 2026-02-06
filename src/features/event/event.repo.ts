@@ -1,4 +1,4 @@
-import { EventRole, Permission, Prisma } from "@prisma/client";
+import { EventRole, EventState, Permission, Prisma } from "@prisma/client";
 import prisma from "../../integrations/db/db.config.js";
 import type {
   CreateEventData,
@@ -298,6 +298,19 @@ const EventRepository = {
     return managers.map((manager) => manager.user);
   },
 
+  getAllMembersIds: async (eventId: number) => {
+    const members = await prisma.userEventRole.findMany({
+      where: {
+        eventId,
+      },
+      select: {
+        userId: true,
+      },
+    });
+
+    return members.map((member) => member.userId);
+  },
+
   listInvites: async (eventId: number, paginationData: PaginationData) => {
     const invites = await prisma.invite.findMany({
       where: { eventId },
@@ -314,6 +327,59 @@ const EventRepository = {
     });
 
     return invites;
+  },
+
+  updateEventState: async (eventId: number, newState: EventState) => {
+    try {
+      await prisma.event.update({
+        where: { id: eventId },
+        data: { state: newState },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        throw new AppError({
+          message: "Event not found",
+          statusCode: 404,
+          code: ErrorCode.EVENT_NOT_FOUND,
+        });
+      }
+
+      throw AppError.internalError();
+    }
+  },
+
+  removeMember: async (eventId: number, userId: number) => {
+    await prisma.userEventRole.deleteMany({
+      where: {
+        eventId,
+        userId,
+      },
+    });
+  },
+
+  removeOwner: async (eventId: number) => {
+    try {
+      await prisma.event.update({
+        where: { id: eventId },
+        data: { ownerId: null },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        throw new AppError({
+          message: "Event not found",
+          statusCode: 404,
+          code: ErrorCode.EVENT_NOT_FOUND,
+        });
+      }
+
+      throw AppError.internalError();
+    }
   },
 };
 
