@@ -309,7 +309,6 @@ const EventService = {
       targetId: event.id,
       targetType: "EVENT",
       data: {
-        eventId: event.id,
         eventName: event.name,
         title: "Event Cancelled",
         body: `${event.name} has been cancelled.`,

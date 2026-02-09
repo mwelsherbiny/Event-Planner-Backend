@@ -1,7 +1,6 @@
 import { InviteStatus, Prisma, type Permission } from "@prisma/client";
 import {
   attendeeCountInclude,
-  eventOmitFields,
   userOmitFields,
 } from "../../config/constants.js";
 import prisma from "../../integrations/db/db.config.js";
@@ -89,7 +88,6 @@ const InviteRepository = {
         roleId: true,
         invitePermissions: true,
         event: {
-          omit: eventOmitFields,
           include: attendeeCountInclude,
         },
         sender: {
