@@ -7,6 +7,7 @@ import {
 import {
   createEventSchema,
   eventInviteRequestSchema,
+  eventUpdateSchema,
   queryEventsSchema,
 } from "./event.schema.js";
 import { upload } from "../../shared/middleware/upload.middleware.js";
@@ -53,7 +54,12 @@ eventRouter.post(
   EventController.resendEventInvite,
 );
 
-eventRouter.patch("/:id", EventController.updateEvent);
+eventRouter.patch(
+  "/:id",
+  upload.single("image"),
+  validateData(eventUpdateSchema),
+  EventController.updateEvent,
+);
 
 eventRouter.delete("/:id/members/me", EventController.leaveEvent);
 eventRouter.delete(

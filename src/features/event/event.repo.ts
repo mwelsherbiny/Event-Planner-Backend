@@ -1,10 +1,11 @@
-import { EventRole, EventState, Permission, Prisma } from "@prisma/client";
+import { EventRole, Permission, Prisma } from "@prisma/client";
 import prisma from "../../integrations/db/db.config.js";
 import type {
   CreateEventData,
   EventSearchEntry,
   FormattedEventData,
   QueryEventsData,
+  UpdateEventData,
 } from "./event.types.js";
 import { getEventState } from "./event.util.js";
 import { RoleCache } from "../../shared/util/cache.util.js";
@@ -329,11 +330,11 @@ const EventRepository = {
     return invites;
   },
 
-  updateEventState: async (eventId: number, newState: EventState) => {
+  updateEvent: async (eventId: number, updateEventData: UpdateEventData) => {
     try {
-      await prisma.event.update({
+      return await prisma.event.update({
         where: { id: eventId },
-        data: { state: newState },
+        data: updateEventData,
       });
     } catch (error) {
       if (

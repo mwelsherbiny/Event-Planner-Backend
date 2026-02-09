@@ -7,13 +7,18 @@ import {
   Permission,
   Prisma,
 } from "@prisma/client";
-import type { CreateEventRequest, QueryEventsRequest } from "./event.schema.js";
+import type {
+  CreateEventRequest,
+  QueryEventsRequest,
+  UpdateEventRequest,
+} from "./event.schema.js";
 import {
   GeneratedEventState,
   type CreateEventData,
   type EventInviteData,
   type FormattedEventData,
   type QueryEventsData,
+  type UpdateEventData,
 } from "./event.types.js";
 import { generateAttendanceCode } from "./event.util.js";
 import { ErrorCode } from "../../errors/error-codes.js";
@@ -283,10 +288,9 @@ const EventService = {
     await assertEventNotStatic(event.state);
 
     if (event.ownerId === userId) {
-      await EventRepository.updateEventState(
-        eventId,
-        GeneratedEventState.CANCELLED,
-      );
+      await EventRepository.updateEvent(eventId, {
+        state: GeneratedEventState.CANCELLED,
+      });
 
       await EventRepository.removeOwner(event.id);
 
@@ -363,6 +367,54 @@ const EventService = {
     );
 
     await EventRepository.removeManager(eventId, managerId);
+  },
+
+  updateEvent: async (
+    eventId: number,
+    updateEventRequest: UpdateEventRequest,
+    requestSenderId: number,
+  ) => {
+    const event = await EventRepository.getById(eventId);
+
+    // check if trying to set max attendance to less than current attendees
+    if (
+      updateEventRequest.maxAttendees &&
+      updateEventRequest.maxAttendees < event.currentAttendees
+    ) {
+      throw new AppError({
+        message: "Cannot set max attendance to less than current attendees",
+        statusCode: 400,
+        code: ErrorCode.INVALID_MAX_ATTENDEES,
+      });
+    }
+
+    // check if trying to open an event for registration while it's full
+    // this is compared with the new max attendees if it's being updated, otherwise with the current max attendees
+    if (
+      updateEventRequest.state === GeneratedEventState.OPEN_FOR_REGISTRATION &&
+      event.currentAttendees >=
+        (updateEventRequest.maxAttendees ?? event.maxAttendees)
+    ) {
+      throw new AppError({
+        message: "Cannot open event for registration because it is full",
+        statusCode: 400,
+        code: ErrorCode.EVENT_FULL,
+      });
+    }
+
+    await assertEventNotStatic(event.state);
+
+    await assertHasPermission(
+      { eventId, ownerId: event.ownerId, visibility: event.visibility },
+      requestSenderId,
+      Permission.UPDATE_EVENT_DETAILS,
+    );
+
+    const updateEventData: UpdateEventData = Object.fromEntries(
+      Object.entries(updateEventRequest).filter(([_, v]) => v !== undefined),
+    );
+
+    return await EventRepository.updateEvent(eventId, updateEventData);
   },
 };
 

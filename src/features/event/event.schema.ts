@@ -1,5 +1,6 @@
 import {
   EventRole,
+  EventState,
   EventVisibility,
   PaymentMethod,
   Permission,
@@ -115,3 +116,31 @@ export const eventInviteRequestSchema = z
     }
   });
 export type EventInviteRequest = z.infer<typeof eventInviteRequestSchema>;
+
+export const eventUpdateSchema = z
+  .object({
+    name: z.string().min(2).max(50).optional(),
+    description: z.string().min(20).max(500).optional(),
+    latitude: z.coerce.number().min(-90).max(90).optional(),
+    longitude: z.coerce.number().min(-180).max(180).optional(),
+    governorate: governorate.optional(),
+    startAt: z.iso.datetime().optional(),
+    duration: z.coerce.number().int().positive().min(15).max(720).optional(),
+    maxAttendees: z.coerce.number().int().positive().max(10000).optional(),
+    imageUrl: z.url().optional(),
+    visibility: visibility.optional(),
+    state: z.enum(EventState).optional(),
+  })
+  .strict()
+  .superRefine((data, ctx) => {
+    // startAt must be in the future
+    if (data.startAt && new Date(data.startAt) <= new Date()) {
+      ctx.addIssue({
+        path: ["startAt"],
+        code: z.ZodIssueCode.custom,
+        message: "Event start time must be in the future",
+        params: { code: "start_time_in_past" },
+      });
+    }
+  });
+export type UpdateEventRequest = z.infer<typeof eventUpdateSchema>;

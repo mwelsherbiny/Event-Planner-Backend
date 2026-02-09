@@ -4,6 +4,7 @@ import type {
   CreateEventRequest,
   EventInviteRequest,
   QueryEventsRequest,
+  UpdateEventRequest,
 } from "./event.schema.js";
 import EventService from "./event.service.js";
 import uploadImage from "../../integrations/cloudinary/imageUpload.js";
@@ -158,7 +159,25 @@ const EventController = {
   },
 
   updateEvent: async (req: Request, res: Response, next: NextFunction) => {
-    // TODO
+    const userId = req.payload!.userId;
+    const eventId = parseInt(req.params.id!, 10);
+    const updateEventRequest: UpdateEventRequest = req.body;
+
+    if (req.file) {
+      const imageUrl = await uploadImage(req.file.buffer);
+      updateEventRequest.imageUrl = imageUrl;
+    }
+
+    const updatedEvent = await EventService.updateEvent(
+      eventId,
+      updateEventRequest,
+      userId,
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: { event: updatedEvent },
+    });
   },
 
   leaveEvent: async (req: Request, res: Response, next: NextFunction) => {

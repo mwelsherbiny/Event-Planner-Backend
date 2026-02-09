@@ -56,3 +56,20 @@ export type FormattedEventData = Omit<Event, "state"> & {
   currentAttendees: number;
   state: GeneratedEventState;
 };
+
+export type UpdateEventData = Partial<
+  Pick<
+    Event,
+    | "name"
+    | "description"
+    | "latitude"
+    | "longitude"
+    | "governorate"
+    | "startAt"
+    | "duration"
+    | "maxAttendees"
+    | "imageUrl"
+    | "visibility"
+    | "state"
+  >
+>;
