@@ -9,6 +9,7 @@ import {
   eventInviteRequestSchema,
   eventUpdateSchema,
   queryEventsSchema,
+  verifyAttendanceSchema,
 } from "./event.schema.js";
 import { upload } from "../../shared/middleware/upload.middleware.js";
 import { paginationSchema } from "../../shared/schemas/paginationSchema.js";
@@ -52,6 +53,11 @@ eventRouter.post(
 eventRouter.post(
   "/:id/invites/:inviteId/resend",
   EventController.resendEventInvite,
+);
+eventRouter.post(
+  "/:id/verify-attendance",
+  validateData(verifyAttendanceSchema),
+  EventController.verifyAttendance,
 );
 
 eventRouter.patch(

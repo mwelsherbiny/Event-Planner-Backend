@@ -90,6 +90,7 @@ model User {
   notificationReceivers NotificationReceiver[]
   userEventRoles        UserEventRole[]
   userEventPermissions  UserEventPermission[]
+  verifiedAttendances   UserEventRole[]        @relation("AttendanceVerifiedBy")
 
   @@index([email])
   @@index([username])
@@ -256,12 +257,18 @@ model UserEventRole {
   roleId Int
   role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
+  joinedAt       DateTime @default(now())
   attendanceCode String?  @db.Uuid
   attended       Boolean? @default(false)
+
+  verifiedAt       DateTime?
+  verifiedByUserId Int?
+  verifiedByUser   User?     @relation("AttendanceVerifiedBy", fields: [verifiedByUserId], references: [id], onDelete: SetNull)
 
   permissions UserEventPermission[]
 
   @@id([userId, eventId])
+  @@unique([eventId, attendanceCode])
   @@index([userId, eventId])
 }
 

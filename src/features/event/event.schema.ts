@@ -144,3 +144,8 @@ export const eventUpdateSchema = z
     }
   });
 export type UpdateEventRequest = z.infer<typeof eventUpdateSchema>;
+
+export const verifyAttendanceSchema = z.object({
+  attendanceCode: z.uuid(),
+});
+export type VerifyAttendanceRequest = z.infer<typeof verifyAttendanceSchema>;

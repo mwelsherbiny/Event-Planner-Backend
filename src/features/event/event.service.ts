@@ -31,6 +31,7 @@ import InviteRepository from "../invite/invite.repo.js";
 import type { PaginationData } from "../../shared/schemas/paginationSchema.js";
 import NotificationService from "../notification/notification.service.js";
 import type { CreateNotificationData } from "../notification/notification.types.js";
+import type { UUID } from "crypto";
 
 const EventService = {
   createEvent: async (
@@ -415,6 +416,41 @@ const EventService = {
     );
 
     return await EventRepository.updateEvent(eventId, updateEventData);
+  },
+
+  verifyAttendance: async (
+    eventId: number,
+    verifierId: number,
+    attendanceCode: UUID,
+  ) => {
+    const event = await EventRepository.getById(eventId);
+
+    const verificationStartTime = event.startAt.getTime() - 60 * 60 * 1000; // 1 hour before event start time
+    const verificationEndTime =
+      event.startAt.getTime() + event.duration * 60 * 1000 + 60 * 60 * 1000; // event start time + event duration + 1 hour
+    if (
+      Date.now() < verificationStartTime ||
+      Date.now() > verificationEndTime
+    ) {
+      throw new AppError({
+        message:
+          "Attendance can only be verified within 1 hour before and after the event",
+        statusCode: 400,
+        code: ErrorCode.INVALID_EVENT_STATE,
+      });
+    }
+
+    await assertHasPermission(
+      { eventId, ownerId: event.ownerId, visibility: event.visibility },
+      verifierId,
+      Permission.SCAN_CODE,
+    );
+
+    return await EventRepository.verifyAttendance(
+      eventId,
+      verifierId,
+      attendanceCode,
+    );
   },
 };
 

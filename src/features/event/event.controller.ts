@@ -11,6 +11,7 @@ import uploadImage from "../../integrations/cloudinary/imageUpload.js";
 import type { EventInviteData } from "./event.types.js";
 import InviteService from "../invite/invite.service.js";
 import type { PaginationData } from "../../shared/schemas/paginationSchema.js";
+import type { UUID } from "crypto";
 
 const EventController = {
   queryEvents: async (req: Request, res: Response) => {
@@ -207,6 +208,22 @@ const EventController = {
     await EventService.removeManager(eventId, managerId, userId);
 
     return res.status(200).json({ success: true });
+  },
+
+  verifyAttendance: async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.payload!.userId;
+    const eventId = parseInt(req.params.id!, 10);
+    const attendanceCode: UUID = req.body.attendanceCode;
+
+    const verificationResult = await EventService.verifyAttendance(
+      eventId,
+      userId,
+      attendanceCode,
+    );
+
+    return res
+      .status(200)
+      .json({ success: true, data: { user: verificationResult.user } });
   },
 };
 

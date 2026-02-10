@@ -16,6 +16,7 @@ import {
 import { ErrorCode } from "../../errors/error-codes.js";
 import AppError from "../../errors/AppError.js";
 import type { PaginationData } from "../../shared/schemas/paginationSchema.js";
+import type { UUID } from "crypto";
 
 const EventRepository = {
   create: async (createEventData: CreateEventData, ownerId: number) => {
@@ -270,6 +271,11 @@ const EventRepository = {
         roleId: RoleCache.getRoleId(EventRole.ATTENDEE),
       },
       select: {
+        attended: true,
+        verifiedAt: true,
+        verifiedByUser: {
+          omit: userOmitFields,
+        },
         user: {
           omit: userOmitFields,
         },
@@ -278,7 +284,12 @@ const EventRepository = {
       take: paginationData.limit,
     });
 
-    return attendees.map((attendee) => attendee.user);
+    return attendees.map((attendee) => ({
+      ...attendee.user,
+      attended: attendee.attended,
+      verifiedAt: attendee.verifiedAt,
+      verifier: attendee.verifiedByUser,
+    }));
   },
 
   listManagers: async (eventId: number, paginationData: PaginationData) => {
@@ -401,6 +412,59 @@ const EventRepository = {
         roleId: RoleCache.getRoleId(EventRole.MANAGER),
       },
     });
+  },
+
+  verifyAttendance: async (
+    eventId: number,
+    verifierId: number,
+    attendanceCode: UUID,
+  ) => {
+    const result = await prisma.$transaction(async (tx) => {
+      const attendance = await tx.userEventRole.findUnique({
+        where: { eventId_attendanceCode: { eventId, attendanceCode } },
+        include: { verifiedByUser: { omit: userOmitFields } },
+      });
+
+      if (!attendance) {
+        throw new AppError({
+          message: "Invalid attendance code",
+          statusCode: 400,
+          code: ErrorCode.INVALID_DATA,
+        });
+      }
+      if (attendance.verifiedAt) {
+        throw new AppError({
+          message: "Attendance already verified",
+          statusCode: 400,
+          code: ErrorCode.USER_ALREADY_VERIFIED,
+          details: [
+            {
+              verifiedAt: attendance.verifiedAt,
+              verifier: attendance.verifiedByUser,
+            },
+          ],
+        });
+      }
+
+      return tx.userEventRole.update({
+        where: { eventId_attendanceCode: { eventId, attendanceCode } },
+        data: {
+          attended: true,
+          verifiedAt: new Date(),
+          verifiedByUserId: verifierId,
+        },
+        include: { user: { omit: userOmitFields } },
+      });
+    });
+
+    return {
+      user: {
+        ...result.user,
+        attended: result.attended,
+        verifiedAt: result.verifiedAt,
+        verifiedByUserId: result.verifiedByUserId,
+      },
+    };
   },
 };
 
