@@ -24,8 +24,14 @@ const NotificationService = {
     userId: number,
     page: number,
     limit: number,
+    type: string,
   ) => {
-    return NotificationRepository.getNotificationsByUserId(userId, page, limit);
+    return NotificationRepository.getNotificationsByUserId(
+      userId,
+      page,
+      limit,
+      type,
+    );
   },
 
   storeNotificationForUsers: async (

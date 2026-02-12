@@ -1,4 +1,4 @@
-import { NotificationTarget } from "@prisma/client";
+import { NotificationTarget, NotificationType } from "@prisma/client";
 import prisma from "../../../integrations/db/db.config.js";
 import type { CreateNotificationData } from "../notification.types.js";
 
@@ -21,9 +21,21 @@ const NotificationRepository = {
     userId: number,
     page: number,
     limit: number,
+    type: string,
   ) => {
+    const whereClause =
+      type === "invite"
+        ? {
+            receiverId: userId,
+            notification: { type: NotificationType.INVITE },
+          }
+        : {
+            receiverId: userId,
+            notification: { NOT: { type: NotificationType.INVITE } },
+          };
+
     const notifications = await prisma.notificationReceiver.findMany({
-      where: { receiverId: userId },
+      where: whereClause,
       skip: (page - 1) * limit,
       take: limit,
       orderBy: {
