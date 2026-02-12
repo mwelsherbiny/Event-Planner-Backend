@@ -198,12 +198,13 @@ model InvitePermissions {
 }
 
 model Event {
-  id          Int     @id @default(autoincrement())
-  name        String  @db.VarChar(255)
-  description String  @db.Text
-  latitude    Decimal @db.Decimal(10, 7)
-  longitude   Decimal @db.Decimal(10, 7)
-  governorate String  @db.VarChar(100)
+  id           Int     @id @default(autoincrement())
+  name         String  @db.VarChar(255)
+  description  String  @db.Text
+  latitude     Decimal @db.Decimal(10, 7)
+  longitude    Decimal @db.Decimal(10, 7)
+  governorate  String  @db.VarChar(100)
+  reminderSent Boolean @default(false)
 
   paymentMethod PaymentMethod
   price         Decimal?      @db.Decimal(10, 2) // null when FREE

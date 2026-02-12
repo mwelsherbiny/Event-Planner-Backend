@@ -27,7 +27,7 @@ export enum GeneratedEventState {
 
 export type CreateEventData = Omit<
   Event,
-  "id" | "ownerId" | "createdAt" | "updatedAt" | "state"
+  "id" | "ownerId" | "createdAt" | "updatedAt" | "state" | "reminderSent"
 >;
 
 export type QueryEventsData = Omit<QueryEventsRequest, "sort"> & {

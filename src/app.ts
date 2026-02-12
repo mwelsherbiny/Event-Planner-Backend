@@ -10,6 +10,9 @@ import { verifyToken } from "./shared/middleware/verify-token.middleware.js";
 import notificationRouter from "./features/notification/notification.router.js";
 import eventRouter from "./features/event/event.router.js";
 import inviteRouter from "./features/invite/invite.router.js";
+import startCrons from "./cron/index.js";
+
+startCrons();
 
 const app: Application = express();
 if (config.NODE_ENV === "development") {

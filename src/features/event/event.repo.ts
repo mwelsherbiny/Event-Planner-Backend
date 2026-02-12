@@ -323,6 +323,20 @@ const EventRepository = {
     return members.map((member) => member.userId);
   },
 
+  getAllAttendeesIds: async (eventId: number) => {
+    const attendees = await prisma.userEventRole.findMany({
+      where: {
+        eventId,
+        roleId: RoleCache.getRoleId(EventRole.ATTENDEE),
+      },
+      select: {
+        userId: true,
+      },
+    });
+
+    return attendees.map((attendee) => attendee.userId);
+  },
+
   listInvites: async (eventId: number, paginationData: PaginationData) => {
     const invites = await prisma.invite.findMany({
       where: { eventId },

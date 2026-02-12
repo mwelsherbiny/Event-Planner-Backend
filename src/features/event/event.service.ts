@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import EventRepository from "./event.repo.js";
 import {
   EventRole,
@@ -23,7 +22,6 @@ import {
 import { generateAttendanceCode } from "./event.util.js";
 import { ErrorCode } from "../../errors/error-codes.js";
 import AppError from "../../errors/AppError.js";
-import UserRepository from "../user/user.repo.js";
 import InviteService from "../invite/invite.service.js";
 import UserService from "../user/user.service.js";
 import type { InviteData, StoredInviteData } from "../invite/invite.types.js";
@@ -301,10 +299,12 @@ const EventService = {
     }
   },
 
-  notifyEventCancellation: async (event: FormattedEventData) => {
+  notifyEventCancellation: async (
+    event: Pick<FormattedEventData, "id" | "name">,
+  ) => {
     const membersIds = await EventRepository.getAllMembersIds(event.id);
 
-    // skip if there are no attendees
+    // skip if there are no members
     if (membersIds.length < 1) {
       return;
     }
@@ -323,6 +323,33 @@ const EventService = {
     await NotificationService.sendNotification(
       notification,
       membersIds as [number, ...number[]],
+    );
+  },
+
+  notifyEventReminder: async (
+    event: Pick<FormattedEventData, "id" | "name">,
+  ) => {
+    const attendeesId = await EventRepository.getAllAttendeesIds(event.id);
+
+    // skip if there are no attendees
+    if (attendeesId.length < 1) {
+      return;
+    }
+
+    const notification: CreateNotificationData = {
+      type: NotificationType.REMINDER,
+      targetId: event.id,
+      targetType: "EVENT",
+      data: {
+        eventName: event.name,
+        title: "Event Reminder",
+        body: `${event.name} is happening soon.`,
+      },
+    };
+
+    await NotificationService.sendNotification(
+      notification,
+      attendeesId as [number, ...number[]],
     );
   },
 
@@ -415,7 +442,17 @@ const EventService = {
       Object.entries(updateEventRequest).filter(([_, v]) => v !== undefined),
     );
 
-    return await EventRepository.updateEvent(eventId, updateEventData);
+    const updatedEvent = await EventRepository.updateEvent(
+      eventId,
+      updateEventData,
+    );
+
+    // if the event is being updated to be cancelled, notify attendees about the cancellation
+    if (updateEventData.state === GeneratedEventState.CANCELLED) {
+      await EventService.notifyEventCancellation(updatedEvent);
+    }
+
+    return updatedEvent;
   },
 
   verifyAttendance: async (
