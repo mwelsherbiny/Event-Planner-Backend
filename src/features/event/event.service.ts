@@ -64,8 +64,6 @@ const EventService = {
       Permission.VIEW_EVENT,
     );
 
-    console.log(userRoleAndPermissions);
-
     const eventDetails = await EventRepository.getEventDetails(
       eventId,
       requestSenderId,

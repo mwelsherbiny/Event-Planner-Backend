@@ -82,26 +82,31 @@ const NotificationService = {
       return;
     }
 
-    // Send the notification via Firebase Cloud Messaging
-    const result = await sendFcmNotification(
-      mapNotificationToFcmPayload(notification),
-      fcmTokensStrings,
-    );
-
-    // delete invalid tokens
-    if (result.failureCount > 0) {
-      await Promise.all(
-        result.responses.map(async (resp, idx) => {
-          if (
-            resp.error?.message ===
-            "messaging/registration-token-not-registered"
-          ) {
-            await FcmTokenRepository.deleteFcmTokenByToken(
-              fcmTokensStrings[idx]!,
-            );
-          }
-        }),
+    try {
+      // Send the notification via Firebase Cloud Messaging
+      const result = await sendFcmNotification(
+        mapNotificationToFcmPayload(notification),
+        fcmTokensStrings,
       );
+
+      // delete invalid tokens
+      if (result.failureCount > 0) {
+        await Promise.all(
+          result.responses.map(async (resp, idx) => {
+            console.log(resp);
+            if (
+              resp.error?.message ===
+              "messaging/registration-token-not-registered"
+            ) {
+              await FcmTokenRepository.deleteFcmTokenByToken(
+                fcmTokensStrings[idx]!,
+              );
+            }
+          }),
+        );
+      }
+    } catch (error) {
+      console.log(error);
     }
   },
 

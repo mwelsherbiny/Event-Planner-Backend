@@ -5,21 +5,6 @@ import {
   EventRole,
 } from "@prisma/client";
 
-export interface ForegroundNotification {
-  data: {
-    type: NotificationType;
-    title: string;
-    body: string;
-  };
-}
-
-export interface PushNotification extends ForegroundNotification {
-  notification: {
-    title: string;
-    body: string;
-  };
-}
-
 interface BaseNotificationJsonData {
   title: string;
   body: string;
@@ -44,4 +29,12 @@ export interface CreateInviteNotificationData extends CreateNotificationData {
   type: "INVITE";
   targetType: "INVITE";
   data: InviteNotificationJsonData;
+}
+
+export interface FcmNotification {
+  notification: {
+    title: string;
+    body: string;
+  };
+  data: Record<string, string>;
 }

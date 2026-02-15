@@ -1,12 +1,9 @@
+import type { FcmNotification } from "../../features/notification/notification.types.js";
 import firebase from "./firebase.config.js";
-import type {
-  PushNotification,
-  ForegroundNotification,
-} from "../../features/notification/notification.types.js";
 import type { MulticastMessage } from "firebase-admin/messaging";
 
 export async function sendFcmNotification(
-  notification: PushNotification | ForegroundNotification,
+  notification: FcmNotification,
   fcmTokensStrings: string[],
 ) {
   const fcmMessage: MulticastMessage = {
@@ -15,5 +12,6 @@ export async function sendFcmNotification(
   };
 
   const result = await firebase.messaging().sendEachForMulticast(fcmMessage);
+
   return result;
 }

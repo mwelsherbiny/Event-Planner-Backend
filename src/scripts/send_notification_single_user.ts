@@ -4,6 +4,8 @@
 //   type ForegroundNotification,
 // } from "../shared/types/NotificationMessage.js";
 
+import EventService from "../features/event/event.service.js";
+
 // // This registration token comes from the client FCM SDKs.
 
 // const userId = 1;
@@ -20,3 +22,8 @@
 // } catch (error) {
 //   console.error("Error sending notification:", error);
 // }
+const EVENT_ID = 292;
+await EventService.notifyEventCancellation({
+  id: EVENT_ID,
+  name: "Test Event",
+});
