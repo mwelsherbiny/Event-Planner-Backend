@@ -71,11 +71,14 @@ const NotificationService = {
     notification: CreateNotificationData,
     userIds: [number, ...number[]],
   ) => {
+    console.log("Sending notification ", notification, " to users:", userIds);
+
     // Store the notification in the database for the users
     await NotificationService.storeNotificationForUsers(notification, userIds);
 
     // Find the registration tokens for the given user IDs
     const fcmTokensStrings = await getFcmTokensStrings(userIds);
+    console.log("Found FCM tokens: ", fcmTokensStrings);
 
     if (fcmTokensStrings.length === 0) {
       // No valid FCM tokens found, skip sending notification
@@ -88,6 +91,9 @@ const NotificationService = {
         mapNotificationToFcmPayload(notification),
         fcmTokensStrings,
       );
+
+      console.log("FCM send result: ", result);
+      console.log("FCM send result responses: ", result.responses);
 
       // delete invalid tokens
       if (result.failureCount > 0) {
