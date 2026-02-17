@@ -63,8 +63,8 @@ const NotificationService = {
     }
   },
 
-  markAllAsRead: async (userId: number) => {
-    await NotificationRepository.markAllNotificationsAsRead(userId);
+  markAllAsRead: async (userId: number, type: string) => {
+    await NotificationRepository.markAllNotificationsAsRead(userId, type);
   },
 
   sendNotification: async (

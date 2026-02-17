@@ -4,7 +4,6 @@ import EventService from "../features/event/event.service.js";
 
 const startReminderCron = () => {
   cron.schedule("* * * * *", async () => {
-
     const now = Date.now();
     const in1Hour = now + 60 * 60 * 1000;
 

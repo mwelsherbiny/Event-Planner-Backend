@@ -73,7 +73,9 @@ const NotificationController = {
   readAll: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.payload!.userId;
-      await NotificationService.markAllAsRead(userId);
+      const type = (req.query.type || "general") as string;
+
+      await NotificationService.markAllAsRead(userId, type);
       res.status(200).json({
         success: true,
         message: "All notifications marked as read successfully",

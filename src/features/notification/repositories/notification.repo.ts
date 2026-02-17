@@ -65,9 +65,26 @@ const NotificationRepository = {
     return result.count;
   },
 
-  markAllNotificationsAsRead: async (userId: number) => {
+  markAllNotificationsAsRead: async (userId: number, type: string) => {
+    const notificationTypes =
+      type === "invite"
+        ? [NotificationType.INVITE]
+        : [
+            NotificationType.CANCELLATION,
+            NotificationType.REMINDER,
+            NotificationType.SYSTEM,
+          ];
+
     await prisma.notificationReceiver.updateMany({
-      where: { receiverId: userId, read: false },
+      where: {
+        receiverId: userId,
+        read: false,
+        notification: {
+          type: {
+            in: notificationTypes,
+          },
+        },
+      },
       data: { read: true },
     });
   },
