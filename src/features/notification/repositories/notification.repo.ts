@@ -49,9 +49,34 @@ const NotificationRepository = {
     return notifications.map((n) => ({ ...n.notification, read: n.read }));
   },
 
-  countUnreadNotifications: async (userId: number) => {
+  countUnreadNotifications: async (userId: number, type: string) => {
+    let notificationFilter;
+    switch (type) {
+      case "invite":
+        notificationFilter = {
+          notification: { type: NotificationType.INVITE },
+        };
+        break;
+      case "general":
+        notificationFilter = {
+          notification: {
+            type: { not: NotificationType.INVITE },
+          },
+        };
+        break;
+      case "total":
+        notificationFilter = {};
+        break;
+      default:
+        notificationFilter = {};
+    }
+
     const count = await prisma.notificationReceiver.count({
-      where: { receiverId: userId, read: false },
+      where: {
+        receiverId: userId,
+        read: false,
+        ...notificationFilter,
+      },
     });
 
     return count;

@@ -44,8 +44,8 @@ const NotificationService = {
     );
   },
 
-  findUnreadCount: async (userId: number) => {
-    return NotificationRepository.countUnreadNotifications(userId);
+  findUnreadCount: async (userId: number, type: string) => {
+    return NotificationRepository.countUnreadNotifications(userId, type);
   },
 
   deleteNotification: async (userId: number, notificationId: number) => {
