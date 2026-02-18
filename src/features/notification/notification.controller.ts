@@ -41,7 +41,7 @@ const NotificationController = {
   countUnread: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.payload!.userId;
-      const type = (req.query.type || "all") as string;
+      const type = (req.query.type || "total") as string;
       const count = await NotificationService.findUnreadCount(userId, type);
       res.status(200).json({ success: true, data: { count } });
     } catch (error) {

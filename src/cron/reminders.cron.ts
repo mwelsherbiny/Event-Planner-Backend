@@ -3,7 +3,7 @@ import prisma from "../integrations/db/db.config.js";
 import EventService from "../features/event/event.service.js";
 
 const startReminderCron = () => {
-  cron.schedule("* * * * *", async () => {
+  cron.schedule("*/10 * * * *", async () => {
     const now = Date.now();
     const in1Hour = now + 60 * 60 * 1000;
 
