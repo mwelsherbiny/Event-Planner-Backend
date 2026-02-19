@@ -46,7 +46,8 @@ const EventRepository = {
         ON ur."eventId" = e."id"
         AND ur."roleId" = ${RoleCache.roleIdMap.get(EventRole.ATTENDEE)}
       WHERE
-        e."visibility" = 'PUBLIC'
+        e."state" = 'OPEN_FOR_REGISTRATION'
+        AND e."visibility" = 'PUBLIC'
         AND e."startAt" >= NOW()
         ${
           queryEventsData.name
