@@ -165,6 +165,11 @@ GET /api/health
 - npm run migrate: run prisma migrate dev
 - npm run generate: generate Prisma client
 
+## Database 
+
+<img width="1961" height="1767" alt="Untitled" src="https://github.com/user-attachments/assets/118952df-6351-4219-b69c-25ba53d64c71" />
+
+
 ## Authentication
 
 - Public routes are under /api/auth.
