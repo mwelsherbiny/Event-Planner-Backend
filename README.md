@@ -11,6 +11,8 @@ This project provides:
 - Notifications (in-app + FCM push token registration).
 - Image upload support for user profiles and event images.
 
+## [Watch Demo](https://www.linkedin.com/posts/mahmoud-elsayid-0440102ba_flutter-mobiledevelopment-eventmanagement-ugcPost-7430386696367792128-tL_Y)
+
 ## Tech Stack
 
 - Runtime: Node.js + TypeScript
